@@ -47,4 +47,5 @@ data/embeddings/*
 !data/**/.gitkeep
 
 # Logs
+logs/
 *.log

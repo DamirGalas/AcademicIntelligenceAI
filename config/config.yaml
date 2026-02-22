@@ -1,0 +1,55 @@
+# ==============================
+# Academic Intelligence AI - Configuration
+# ==============================
+
+# --- Data Sources ---
+sources:
+  rss_feeds:
+    - name: "PMF Novi Sad - Vesti"
+      url: "https://www.pmf.uns.ac.rs/feed/"
+    - name: "PMF Novi Sad - Obaveštenja"
+      url: "https://www.pmf.uns.ac.rs/obavestenja/feed/"
+  web_pages:
+    - name: "PMF Novi Sad - Vesti"
+      url: "https://www.pmf.uns.ac.rs/vesti/"
+  pdf_directories:
+    - "data/raw/pdfs/"
+
+# --- Chunking ---
+chunking:
+  chunk_size: 400
+  chunk_overlap: 80
+  min_chunk_size: 50
+
+# --- Embedding ---
+embedding:
+  model: "all-MiniLM-L6-v2"
+  dimension: 384
+  batch_size: 32
+
+# --- Vector DB ---
+vector_db:
+  engine: "faiss"
+  index_path: "data/embeddings/faiss_index"
+  similarity_metric: "cosine"
+
+# --- RAG / Query ---
+query:
+  llm_model: "gpt-3.5-turbo"
+  max_context_chunks: 5
+  confidence_threshold: 0.65
+  max_tokens: 512
+  temperature: 0.2
+
+# --- Paths ---
+paths:
+  raw_data: "data/raw/"
+  processed_data: "data/processed/"
+  embeddings: "data/embeddings/"
+
+# --- Monitoring ---
+monitoring:
+  log_level: "INFO"
+  log_file: "logs/pipeline.log"
+  track_drift: true
+  drift_check_interval_hours: 24
