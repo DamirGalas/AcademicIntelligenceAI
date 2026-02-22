@@ -9,6 +9,7 @@ import yaml
 from sentence_transformers import SentenceTransformer
 
 from academic_intelligence_ai.monitoring.logger import get_logger
+from academic_intelligence_ai.monitoring.pipeline_tracker import PipelineTracker
 
 logger = get_logger("load.load_documents")
 
@@ -62,105 +63,108 @@ def init_db(db_path: Path) -> sqlite3.Connection:
 
 def run():
     """Load all chunked JSON files into SQLite and FAISS."""
-    config = load_config()
+    with PipelineTracker("load") as tracker:
+        config = load_config()
 
-    embedding_cfg = config.get("embedding", {})
-    vector_cfg = config.get("vector_db", {})
-    model_name = embedding_cfg.get("model", "all-MiniLM-L6-v2")
-    batch_size = embedding_cfg.get("batch_size", 32)
+        embedding_cfg = config.get("embedding", {})
+        vector_cfg = config.get("vector_db", {})
+        model_name = embedding_cfg.get("model", "all-MiniLM-L6-v2")
+        batch_size = embedding_cfg.get("batch_size", 32)
 
-    db_path = PROJECT_ROOT / "data" / "academic.db"
-    faiss_path = PROJECT_ROOT / vector_cfg.get("index_path", "data/embeddings/faiss_index")
-    meta_path = faiss_path.parent / "metadata.pkl"
+        db_path = PROJECT_ROOT / "data" / "academic.db"
+        faiss_path = PROJECT_ROOT / vector_cfg.get("index_path", "data/embeddings/faiss_index")
+        meta_path = faiss_path.parent / "metadata.pkl"
 
-    chunked_dir = PROJECT_ROOT / config.get("paths", {}).get("chunked_data", "data/chunked/")
-    json_files = list(chunked_dir.glob("*.json"))
+        chunked_dir = PROJECT_ROOT / config.get("paths", {}).get("chunked_data", "data/chunked/")
+        json_files = list(chunked_dir.glob("*.json"))
 
-    if not json_files:
-        logger.warning("No chunked JSON files found in %s", chunked_dir)
-        return
+        if not json_files:
+            logger.warning("No chunked JSON files found in %s", chunked_dir)
+            tracker.record(items_in=0, items_out=0, items_skipped=0)
+            return
 
-    logger.info("Found %d chunked file(s) to load", len(json_files))
+        logger.info("Found %d chunked file(s) to load", len(json_files))
 
-    # Load embedding model
-    logger.info("Loading embedding model: %s", model_name)
-    model = SentenceTransformer(model_name)
+        # Load embedding model
+        logger.info("Loading embedding model: %s", model_name)
+        model = SentenceTransformer(model_name)
 
-    # Init DB (drops and recreates tables for clean schema)
-    conn = init_db(db_path)
-    cur = conn.cursor()
+        # Init DB (drops and recreates tables for clean schema)
+        conn = init_db(db_path)
+        cur = conn.cursor()
 
-    all_texts = []
-    metadata = []
-    doc_count = 0
+        all_texts = []
+        metadata = []
+        doc_count = 0
 
-    for file_path in json_files:
-        payload = json.loads(file_path.read_text(encoding="utf-8"))
+        for file_path in json_files:
+            payload = json.loads(file_path.read_text(encoding="utf-8"))
 
-        # Insert parent document
-        cur.execute(
-            "INSERT INTO documents (source, purpose, raw_filename, full_text_length, processed_at) VALUES (?, ?, ?, ?, ?)",
-            (
-                payload["source"],
-                payload.get("purpose", "unknown"),
-                payload["raw_filename"],
-                payload["full_text_length"],
-                payload["processed_at"],
-            ),
-        )
-        doc_id = cur.lastrowid
-        doc_count += 1
-
-        # Insert each chunk
-        for chunk in payload["chunks"]:
+            # Insert parent document
             cur.execute(
-                "INSERT INTO chunks (doc_id, chunk_index, text, chunk_length, char_offset) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO documents (source, purpose, raw_filename, full_text_length, processed_at) VALUES (?, ?, ?, ?, ?)",
                 (
-                    doc_id,
-                    chunk["chunk_index"],
-                    chunk["text"],
-                    chunk["chunk_length"],
-                    chunk["char_offset"],
+                    payload["source"],
+                    payload.get("purpose", "unknown"),
+                    payload["raw_filename"],
+                    payload["full_text_length"],
+                    payload["processed_at"],
                 ),
             )
-            chunk_id = cur.lastrowid
+            doc_id = cur.lastrowid
+            doc_count += 1
 
-            all_texts.append(chunk["text"])
-            metadata.append({
-                "chunk_id": chunk_id,
-                "doc_id": doc_id,
-                "chunk_index": chunk["chunk_index"],
-                "source": payload["source"],
-                "purpose": payload.get("purpose", "unknown"),
-            })
+            # Insert each chunk
+            for chunk in payload["chunks"]:
+                cur.execute(
+                    "INSERT INTO chunks (doc_id, chunk_index, text, chunk_length, char_offset) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        doc_id,
+                        chunk["chunk_index"],
+                        chunk["text"],
+                        chunk["chunk_length"],
+                        chunk["char_offset"],
+                    ),
+                )
+                chunk_id = cur.lastrowid
+
+                all_texts.append(chunk["text"])
+                metadata.append({
+                    "chunk_id": chunk_id,
+                    "doc_id": doc_id,
+                    "chunk_index": chunk["chunk_index"],
+                    "source": payload["source"],
+                    "purpose": payload.get("purpose", "unknown"),
+                })
+
+            logger.info(
+                "Loaded %s (doc_id=%d, %d chunks)",
+                payload["source"], doc_id, len(payload["chunks"]),
+            )
+
+        conn.commit()
+
+        # Encode all chunks in batches
+        logger.info("Encoding %d chunks with %s (batch_size=%d)", len(all_texts), model_name, batch_size)
+        embeddings_np = model.encode(all_texts, batch_size=batch_size, show_progress_bar=False)
+        embeddings_np = np.array(embeddings_np).astype("float32")
+
+        # Build FAISS index (cosine similarity via normalized inner product)
+        faiss.normalize_L2(embeddings_np)
+        index = faiss.IndexFlatIP(embeddings_np.shape[1])
+        index.add(embeddings_np)
+
+        faiss_path.parent.mkdir(parents=True, exist_ok=True)
+        faiss.write_index(index, str(faiss_path))
+        meta_path.write_bytes(pickle.dumps(metadata))
 
         logger.info(
-            "Loaded %s (doc_id=%d, %d chunks)",
-            payload["source"], doc_id, len(payload["chunks"]),
+            "Load complete: %d documents, %d chunks, %d vectors (dim=%d), DB=%s",
+            doc_count, len(all_texts), index.ntotal, embeddings_np.shape[1], db_path.name,
         )
 
-    conn.commit()
-
-    # Encode all chunks in batches
-    logger.info("Encoding %d chunks with %s (batch_size=%d)", len(all_texts), model_name, batch_size)
-    embeddings_np = model.encode(all_texts, batch_size=batch_size, show_progress_bar=False)
-    embeddings_np = np.array(embeddings_np).astype("float32")
-
-    # Build FAISS index (cosine similarity via normalized inner product)
-    faiss.normalize_L2(embeddings_np)
-    index = faiss.IndexFlatIP(embeddings_np.shape[1])
-    index.add(embeddings_np)
-
-    faiss_path.parent.mkdir(parents=True, exist_ok=True)
-    faiss.write_index(index, str(faiss_path))
-    meta_path.write_bytes(pickle.dumps(metadata))
-
-    logger.info(
-        "Load complete: %d documents, %d chunks, %d vectors (dim=%d), DB=%s",
-        doc_count, len(all_texts), index.ntotal, embeddings_np.shape[1], db_path.name,
-    )
-
-    conn.close()
+        tracker.record(items_in=len(json_files), items_out=len(all_texts), items_skipped=0)
+        conn.close()
 
 
 if __name__ == "__main__":

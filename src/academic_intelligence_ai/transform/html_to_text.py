@@ -7,6 +7,7 @@ import yaml
 from bs4 import BeautifulSoup
 
 from academic_intelligence_ai.monitoring.logger import get_logger
+from academic_intelligence_ai.monitoring.pipeline_tracker import PipelineTracker
 
 logger = get_logger("transform.html_to_text")
 
@@ -88,31 +89,34 @@ def process_file(file_path: Path, config: dict, source_map: dict[str, str]) -> b
 
 def run():
     """Process all raw HTML files in data/raw/."""
-    config = load_config()
-    raw_dir = PROJECT_ROOT / "data" / "raw"
+    with PipelineTracker("transform") as tracker:
+        config = load_config()
+        raw_dir = PROJECT_ROOT / "data" / "raw"
 
-    html_files = list(raw_dir.glob("*.html"))
-    if not html_files:
-        logger.warning("No HTML files found in %s", raw_dir)
-        return
+        html_files = list(raw_dir.glob("*.html"))
+        if not html_files:
+            logger.warning("No HTML files found in %s", raw_dir)
+            tracker.record(items_in=0, items_out=0, items_skipped=0)
+            return
 
-    source_map = build_source_map(config)
-    logger.info("Found %d raw HTML file(s) to process", len(html_files))
+        source_map = build_source_map(config)
+        logger.info("Found %d raw HTML file(s) to process", len(html_files))
 
-    processed = 0
-    skipped = 0
+        processed = 0
+        skipped = 0
 
-    for file_path in html_files:
-        try:
-            if process_file(file_path, config, source_map):
-                processed += 1
-            else:
+        for file_path in html_files:
+            try:
+                if process_file(file_path, config, source_map):
+                    processed += 1
+                else:
+                    skipped += 1
+            except Exception as e:
+                logger.error("Failed to process %s: %s", file_path.name, e)
                 skipped += 1
-        except Exception as e:
-            logger.error("Failed to process %s: %s", file_path.name, e)
-            skipped += 1
 
-    logger.info("Transform complete: %d processed, %d skipped", processed, skipped)
+        logger.info("Transform complete: %d processed, %d skipped", processed, skipped)
+        tracker.record(items_in=len(html_files), items_out=processed, items_skipped=skipped)
 
 
 if __name__ == "__main__":

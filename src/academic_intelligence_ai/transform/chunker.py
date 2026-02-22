@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from academic_intelligence_ai.monitoring.logger import get_logger
+from academic_intelligence_ai.monitoring.pipeline_tracker import PipelineTracker
 
 logger = get_logger("transform.chunker")
 
@@ -121,38 +122,41 @@ def process_file(file_path: Path, chunk_cfg: dict, output_dir: Path) -> int:
 
 def run():
     """Chunk all processed JSON files in data/processed/."""
-    config = load_config()
-    chunk_cfg = config.get("chunking", {})
+    with PipelineTracker("chunk") as tracker:
+        config = load_config()
+        chunk_cfg = config.get("chunking", {})
 
-    processed_dir = PROJECT_ROOT / "data" / "processed"
-    output_dir = PROJECT_ROOT / "data" / "chunked"
-    output_dir.mkdir(parents=True, exist_ok=True)
+        processed_dir = PROJECT_ROOT / "data" / "processed"
+        output_dir = PROJECT_ROOT / "data" / "chunked"
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-    json_files = list(processed_dir.glob("*.json"))
-    if not json_files:
-        logger.warning("No processed JSON files found in %s", processed_dir)
-        return
+        json_files = list(processed_dir.glob("*.json"))
+        if not json_files:
+            logger.warning("No processed JSON files found in %s", processed_dir)
+            tracker.record(items_in=0, items_out=0, items_skipped=0)
+            return
 
-    logger.info("Found %d processed file(s) to chunk", len(json_files))
+        logger.info("Found %d processed file(s) to chunk", len(json_files))
 
-    total_chunks = 0
-    skipped = 0
+        total_chunks = 0
+        skipped = 0
 
-    for file_path in json_files:
-        try:
-            count = process_file(file_path, chunk_cfg, output_dir)
-            if count > 0:
-                total_chunks += count
-            else:
+        for file_path in json_files:
+            try:
+                count = process_file(file_path, chunk_cfg, output_dir)
+                if count > 0:
+                    total_chunks += count
+                else:
+                    skipped += 1
+            except Exception as e:
+                logger.error("Failed to chunk %s: %s", file_path.name, e)
                 skipped += 1
-        except Exception as e:
-            logger.error("Failed to chunk %s: %s", file_path.name, e)
-            skipped += 1
 
-    logger.info(
-        "Chunking complete: %d files -> %d total chunks, %d skipped",
-        len(json_files), total_chunks, skipped,
-    )
+        logger.info(
+            "Chunking complete: %d files -> %d total chunks, %d skipped",
+            len(json_files), total_chunks, skipped,
+        )
+        tracker.record(items_in=len(json_files), items_out=total_chunks, items_skipped=skipped)
 
 
 if __name__ == "__main__":
