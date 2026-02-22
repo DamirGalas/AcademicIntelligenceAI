@@ -3,20 +3,64 @@
 # ==============================
 
 # --- Data Sources ---
+# purpose: general_info | news | study_programs | department_info | student_events | admissions | admissions_tests | student_questions
 sources:
-  - name: "pmf_uns"
-    type: "html"
-    url: "https://www.pmf.uns.ac.rs"
-    enabled: true
-
+  # PMF - News (centralni portal)
   - name: "pmf_uns_vesti"
     type: "html"
+    purpose: "news"
     url: "https://www.pmf.uns.ac.rs/vesti/"
     enabled: true
 
-  - name: "mit"
+  # Departman za matematiku i informatiku
+  - name: "dmi_programs"
     type: "html"
-    url: "https://www.mit.edu"
+    purpose: "study_programs"
+    url: "https://matematika.pmf.uns.ac.rs/studije/studijski-programi/"
+    enabled: true
+
+  - name: "dmi_informatika_news"
+    type: "html"
+    purpose: "student_events"
+    url: "https://informatika.pmf.uns.ac.rs/"
+    enabled: true
+
+  - name: "dmi_main"
+    type: "html"
+    purpose: "department_info"
+    url: "https://dmistari.pmf.uns.ac.rs/"
+    enabled: false  # SSL certificate error
+
+  - name: "dmi_imenik"
+    type: "html"
+    purpose: "department_info"
+    url: "https://dmistari.pmf.uns.ac.rs/o_nama/imenik/"
+    enabled: false  # SSL certificate error
+
+  # Departman za fiziku
+  - name: "df_main"
+    type: "html"
+    purpose: "department_info"
+    url: "https://www.df.uns.ac.rs/"
+    enabled: true
+
+  - name: "df_upis"
+    type: "html"
+    purpose: "admissions"
+    url: "https://www.df.uns.ac.rs/studije/upis/"
+    enabled: true
+
+  - name: "df_prijemni"
+    type: "html"
+    purpose: "admissions_tests"
+    url: "https://www.df.uns.ac.rs/studije/upis/prijemni-ispit/"
+    enabled: true
+
+  # Student questions signal (requires Playwright/Selenium for dynamic content)
+  - name: "reddit_pmf"
+    type: "html"
+    purpose: "student_questions"
+    url: "https://www.reddit.com/r/StudentiSrbija/search/?q=pmf"
     enabled: false
 
 # --- Transform ---

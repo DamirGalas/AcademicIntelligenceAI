@@ -32,6 +32,7 @@ def init_db(db_path: Path) -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             source TEXT NOT NULL,
+            purpose TEXT NOT NULL,
             raw_filename TEXT NOT NULL,
             text TEXT NOT NULL,
             text_length INTEGER NOT NULL,
@@ -87,8 +88,8 @@ def run():
         meta = payload["metadata"]
 
         cur.execute(
-            "INSERT INTO documents (source, raw_filename, text, text_length, processed_at) VALUES (?, ?, ?, ?, ?)",
-            (meta["source"], meta["raw_filename"], text, meta["text_length"], meta["processed_at"]),
+            "INSERT INTO documents (source, purpose, raw_filename, text, text_length, processed_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (meta["source"], meta.get("purpose", "unknown"), meta["raw_filename"], text, meta["text_length"], meta["processed_at"]),
         )
         doc_id = cur.lastrowid
 
@@ -97,6 +98,7 @@ def run():
         metadata.append({
             "doc_id": doc_id,
             "source": meta["source"],
+            "purpose": meta.get("purpose", "unknown"),
         })
 
         logger.info("Loaded %s (doc_id=%d, %d chars)", meta["source"], doc_id, meta["text_length"])

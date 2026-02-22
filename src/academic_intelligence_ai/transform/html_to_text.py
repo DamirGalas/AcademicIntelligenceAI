@@ -34,17 +34,23 @@ def clean_html(html: str, strip_tags: list[str]) -> str:
     return text
 
 
-def extract_metadata(file_path: Path, text: str) -> dict:
+def build_source_map(config: dict) -> dict[str, str]:
+    """Build a mapping of source name -> purpose from config."""
+    return {s["name"]: s.get("purpose", "unknown") for s in config.get("sources", [])}
+
+
+def extract_metadata(file_path: Path, text: str, purpose: str) -> dict:
     """Build metadata dict from the raw file and extracted text."""
     return {
         "source": file_path.stem,
+        "purpose": purpose,
         "raw_filename": file_path.name,
         "processed_at": datetime.now(timezone.utc).isoformat(),
         "text_length": len(text),
     }
 
 
-def process_file(file_path: Path, config: dict) -> bool:
+def process_file(file_path: Path, config: dict, source_map: dict[str, str]) -> bool:
     """Process a single raw HTML file into a structured JSON output.
 
     Returns True if processed successfully, False if skipped.
@@ -60,7 +66,8 @@ def process_file(file_path: Path, config: dict) -> bool:
         logger.warning("Skipping %s: text too short (%d chars, minimum %d)", file_path.name, len(text), min_text_length)
         return False
 
-    metadata = extract_metadata(file_path, text)
+    purpose = source_map.get(file_path.stem, "unknown")
+    metadata = extract_metadata(file_path, text, purpose)
 
     processed_dir = PROJECT_ROOT / "data" / "processed"
     processed_dir.mkdir(parents=True, exist_ok=True)
@@ -89,6 +96,7 @@ def run():
         logger.warning("No HTML files found in %s", raw_dir)
         return
 
+    source_map = build_source_map(config)
     logger.info("Found %d raw HTML file(s) to process", len(html_files))
 
     processed = 0
@@ -96,7 +104,7 @@ def run():
 
     for file_path in html_files:
         try:
-            if process_file(file_path, config):
+            if process_file(file_path, config, source_map):
                 processed += 1
             else:
                 skipped += 1
