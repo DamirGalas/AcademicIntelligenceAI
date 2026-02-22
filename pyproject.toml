@@ -2,7 +2,7 @@
 name = "academic-intelligence-ai"
 version = "0.1.0"
 description = ""
-requires-python = ">=3.14"
+requires-python = ">=3.14,<3.15"
 authors = [
     { name = "DamirGalas", email = "galasdd@gmail.com" }
 ]
@@ -18,3 +18,5 @@ packages = [{ include = "academic_intelligence_ai", from = "src" }]
 requests = "^2.32.5"
 pyyaml = "^6.0.3"
 beautifulsoup4 = "^4.14.3"
+sentence-transformers = "^5.2.3"
+faiss-cpu = "^1.13.2"
