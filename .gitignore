@@ -19,6 +19,7 @@ dist/
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 
@@ -38,6 +39,12 @@ Desktop.ini
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Data
+data/raw/*
+data/processed/*
+data/embeddings/*
+!data/**/.gitkeep
 
 # Logs
 *.log
