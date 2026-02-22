@@ -105,9 +105,10 @@ def run():
 
     conn.commit()
 
-    # Build FAISS index
+    # Build FAISS index (cosine similarity via normalized inner product)
     embeddings_np = np.vstack(embeddings).astype("float32")
-    index = faiss.IndexFlatL2(embeddings_np.shape[1])
+    faiss.normalize_L2(embeddings_np)
+    index = faiss.IndexFlatIP(embeddings_np.shape[1])
     index.add(embeddings_np)
 
     faiss_path.parent.mkdir(parents=True, exist_ok=True)
