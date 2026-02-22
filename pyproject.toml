@@ -1,0 +1,15 @@
+[project]
+name = "academic-intelligence-ai"
+version = "0.1.0"
+description = ""
+requires-python = ">=3.14"
+authors = [
+    { name = "DamirGalas", email = "galasdd@gmail.com" }
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{ include = "academic_intelligence_ai", from = "src" }]
