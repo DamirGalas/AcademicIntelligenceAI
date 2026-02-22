@@ -4,16 +4,20 @@
 
 # --- Data Sources ---
 sources:
-  rss_feeds:
-    - name: "PMF Novi Sad - Vesti"
-      url: "https://www.pmf.uns.ac.rs/feed/"
-    - name: "PMF Novi Sad - Obaveštenja"
-      url: "https://www.pmf.uns.ac.rs/obavestenja/feed/"
-  web_pages:
-    - name: "PMF Novi Sad - Vesti"
-      url: "https://www.pmf.uns.ac.rs/vesti/"
-  pdf_directories:
-    - "data/raw/pdfs/"
+  - name: "pmf_uns"
+    type: "html"
+    url: "https://www.pmf.uns.ac.rs"
+    enabled: true
+
+  - name: "pmf_uns_vesti"
+    type: "html"
+    url: "https://www.pmf.uns.ac.rs/vesti/"
+    enabled: true
+
+  - name: "mit"
+    type: "html"
+    url: "https://www.mit.edu"
+    enabled: false
 
 # --- Chunking ---
 chunking:
