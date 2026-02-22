@@ -19,6 +19,11 @@ sources:
     url: "https://www.mit.edu"
     enabled: false
 
+# --- Transform ---
+transform:
+  min_text_length: 500
+  strip_tags: ["script", "style", "noscript", "header", "footer", "nav"]
+
 # --- Chunking ---
 chunking:
   chunk_size: 400

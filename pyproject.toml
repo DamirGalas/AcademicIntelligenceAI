@@ -17,3 +17,4 @@ packages = [{ include = "academic_intelligence_ai", from = "src" }]
 [tool.poetry.dependencies]
 requests = "^2.32.5"
 pyyaml = "^6.0.3"
+beautifulsoup4 = "^4.14.3"

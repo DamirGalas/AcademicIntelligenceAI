@@ -18,12 +18,11 @@ def fetch_html(url: str) -> str:
 
 
 def save_raw_html(html: str, source_name: str) -> Path:
-    """Save raw HTML to data/raw/ with a timestamped filename."""
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    """Save raw HTML to data/raw/, overwriting the previous version for this source."""
     raw_dir = PROJECT_ROOT / "data" / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
-    file_path = raw_dir / f"{source_name}_{timestamp}.html"
+    file_path = raw_dir / f"{source_name}.html"
     file_path.write_text(html, encoding="utf-8")
 
     return file_path
