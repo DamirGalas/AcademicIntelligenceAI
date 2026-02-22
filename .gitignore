@@ -43,6 +43,7 @@ htmlcov/
 # Data
 data/raw/*
 data/processed/*
+data/chunked/*
 data/embeddings/*
 data/*.db
 !data/**/.gitkeep

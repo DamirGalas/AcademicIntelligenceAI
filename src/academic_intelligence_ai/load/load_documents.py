@@ -24,89 +24,129 @@ def load_config() -> dict:
 
 
 def init_db(db_path: Path) -> sqlite3.Connection:
-    """Create SQLite database and documents table."""
+    """Create SQLite database with documents and chunks tables."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
+
+    # Drop and recreate for clean schema on each full reload
+    cur.execute("DROP TABLE IF EXISTS chunks")
+    cur.execute("DROP TABLE IF EXISTS documents")
+
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS documents (
+        CREATE TABLE documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             source TEXT NOT NULL,
             purpose TEXT NOT NULL,
             raw_filename TEXT NOT NULL,
-            text TEXT NOT NULL,
-            text_length INTEGER NOT NULL,
+            full_text_length INTEGER NOT NULL,
             processed_at TEXT NOT NULL
         )
     """)
+
+    cur.execute("""
+        CREATE TABLE chunks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doc_id INTEGER NOT NULL,
+            chunk_index INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            chunk_length INTEGER NOT NULL,
+            char_offset INTEGER NOT NULL,
+            FOREIGN KEY (doc_id) REFERENCES documents(id)
+        )
+    """)
+
     conn.commit()
     return conn
 
 
-def clear_db(conn: sqlite3.Connection):
-    """Remove all existing documents before a fresh load."""
-    conn.execute("DELETE FROM documents")
-    conn.commit()
-
-
 def run():
-    """Load all processed JSON files into SQLite and FAISS."""
+    """Load all chunked JSON files into SQLite and FAISS."""
     config = load_config()
 
     embedding_cfg = config.get("embedding", {})
     vector_cfg = config.get("vector_db", {})
     model_name = embedding_cfg.get("model", "all-MiniLM-L6-v2")
+    batch_size = embedding_cfg.get("batch_size", 32)
 
     db_path = PROJECT_ROOT / "data" / "academic.db"
     faiss_path = PROJECT_ROOT / vector_cfg.get("index_path", "data/embeddings/faiss_index")
     meta_path = faiss_path.parent / "metadata.pkl"
 
-    processed_dir = PROJECT_ROOT / "data" / "processed"
-    json_files = list(processed_dir.glob("*.json"))
+    chunked_dir = PROJECT_ROOT / config.get("paths", {}).get("chunked_data", "data/chunked/")
+    json_files = list(chunked_dir.glob("*.json"))
 
     if not json_files:
-        logger.warning("No processed JSON files found in %s", processed_dir)
+        logger.warning("No chunked JSON files found in %s", chunked_dir)
         return
 
-    logger.info("Found %d processed file(s) to load", len(json_files))
+    logger.info("Found %d chunked file(s) to load", len(json_files))
 
     # Load embedding model
     logger.info("Loading embedding model: %s", model_name)
     model = SentenceTransformer(model_name)
 
-    # Init and clear DB for fresh load
+    # Init DB (drops and recreates tables for clean schema)
     conn = init_db(db_path)
-    clear_db(conn)
     cur = conn.cursor()
 
-    embeddings = []
+    all_texts = []
     metadata = []
+    doc_count = 0
 
     for file_path in json_files:
         payload = json.loads(file_path.read_text(encoding="utf-8"))
-        text = payload["text"]
-        meta = payload["metadata"]
 
+        # Insert parent document
         cur.execute(
-            "INSERT INTO documents (source, purpose, raw_filename, text, text_length, processed_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (meta["source"], meta.get("purpose", "unknown"), meta["raw_filename"], text, meta["text_length"], meta["processed_at"]),
+            "INSERT INTO documents (source, purpose, raw_filename, full_text_length, processed_at) VALUES (?, ?, ?, ?, ?)",
+            (
+                payload["source"],
+                payload.get("purpose", "unknown"),
+                payload["raw_filename"],
+                payload["full_text_length"],
+                payload["processed_at"],
+            ),
         )
         doc_id = cur.lastrowid
+        doc_count += 1
 
-        vector = model.encode(text)
-        embeddings.append(vector)
-        metadata.append({
-            "doc_id": doc_id,
-            "source": meta["source"],
-            "purpose": meta.get("purpose", "unknown"),
-        })
+        # Insert each chunk
+        for chunk in payload["chunks"]:
+            cur.execute(
+                "INSERT INTO chunks (doc_id, chunk_index, text, chunk_length, char_offset) VALUES (?, ?, ?, ?, ?)",
+                (
+                    doc_id,
+                    chunk["chunk_index"],
+                    chunk["text"],
+                    chunk["chunk_length"],
+                    chunk["char_offset"],
+                ),
+            )
+            chunk_id = cur.lastrowid
 
-        logger.info("Loaded %s (doc_id=%d, %d chars)", meta["source"], doc_id, meta["text_length"])
+            all_texts.append(chunk["text"])
+            metadata.append({
+                "chunk_id": chunk_id,
+                "doc_id": doc_id,
+                "chunk_index": chunk["chunk_index"],
+                "source": payload["source"],
+                "purpose": payload.get("purpose", "unknown"),
+            })
+
+        logger.info(
+            "Loaded %s (doc_id=%d, %d chunks)",
+            payload["source"], doc_id, len(payload["chunks"]),
+        )
 
     conn.commit()
 
+    # Encode all chunks in batches
+    logger.info("Encoding %d chunks with %s (batch_size=%d)", len(all_texts), model_name, batch_size)
+    embeddings_np = model.encode(all_texts, batch_size=batch_size, show_progress_bar=False)
+    embeddings_np = np.array(embeddings_np).astype("float32")
+
     # Build FAISS index (cosine similarity via normalized inner product)
-    embeddings_np = np.vstack(embeddings).astype("float32")
     faiss.normalize_L2(embeddings_np)
     index = faiss.IndexFlatIP(embeddings_np.shape[1])
     index.add(embeddings_np)
@@ -116,9 +156,11 @@ def run():
     meta_path.write_bytes(pickle.dumps(metadata))
 
     logger.info(
-        "Load complete: %d documents, %d vectors (dim=%d), DB=%s",
-        len(json_files), index.ntotal, embeddings_np.shape[1], db_path.name,
+        "Load complete: %d documents, %d chunks, %d vectors (dim=%d), DB=%s",
+        doc_count, len(all_texts), index.ntotal, embeddings_np.shape[1], db_path.name,
     )
+
+    conn.close()
 
 
 if __name__ == "__main__":
