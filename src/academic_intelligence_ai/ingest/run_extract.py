@@ -45,6 +45,7 @@ def run():
                 fail_count += 1
 
         logger.info("Extraction complete: %d succeeded, %d failed", success_count, fail_count)
+        tracker.add_metric("fetch_failures", fail_count)
         tracker.record(items_in=len(enabled), items_out=success_count, items_skipped=fail_count)
 
 

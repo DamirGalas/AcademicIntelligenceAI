@@ -104,9 +104,16 @@ def run():
 
         processed = 0
         skipped = 0
+        empty_files = 0
 
         for file_path in html_files:
             try:
+                raw_html = file_path.read_text(encoding="utf-8")
+                if not raw_html.strip():
+                    logger.warning("Empty raw file detected: %s", file_path.name)
+                    empty_files += 1
+                    skipped += 1
+                    continue
                 if process_file(file_path, config, source_map):
                     processed += 1
                 else:
@@ -114,6 +121,8 @@ def run():
             except Exception as e:
                 logger.error("Failed to process %s: %s", file_path.name, e)
                 skipped += 1
+
+        tracker.add_metric("empty_files", empty_files)
 
         logger.info("Transform complete: %d processed, %d skipped", processed, skipped)
         tracker.record(items_in=len(html_files), items_out=processed, items_skipped=skipped)

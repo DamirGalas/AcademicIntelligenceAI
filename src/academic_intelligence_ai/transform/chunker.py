@@ -77,8 +77,11 @@ def chunk_text(text: str, chunk_size: int, chunk_overlap: int, min_chunk_size: i
     return chunks
 
 
-def process_file(file_path: Path, chunk_cfg: dict, output_dir: Path) -> int:
-    """Chunk a single processed JSON file. Returns number of chunks produced."""
+def process_file(file_path: Path, chunk_cfg: dict, output_dir: Path) -> tuple[int, list[int]]:
+    """Chunk a single processed JSON file.
+
+    Returns (num_chunks, list_of_chunk_lengths).
+    """
     chunk_size = chunk_cfg.get("chunk_size", 400)
     chunk_overlap = chunk_cfg.get("chunk_overlap", 80)
     min_chunk_size = chunk_cfg.get("min_chunk_size", 50)
@@ -91,7 +94,7 @@ def process_file(file_path: Path, chunk_cfg: dict, output_dir: Path) -> int:
 
     if not chunks:
         logger.warning("No chunks produced for %s (text_length=%d)", meta["source"], len(text))
-        return 0
+        return 0, []
 
     output = {
         "source": meta["source"],
@@ -113,11 +116,12 @@ def process_file(file_path: Path, chunk_cfg: dict, output_dir: Path) -> int:
         encoding="utf-8",
     )
 
+    lengths = [c["chunk_length"] for c in chunks]
     logger.info(
         "Chunked %s -> %d chunks (avg %.0f chars)",
-        meta["source"], len(chunks), sum(c["chunk_length"] for c in chunks) / len(chunks),
+        meta["source"], len(chunks), sum(lengths) / len(lengths),
     )
-    return len(chunks)
+    return len(chunks), lengths
 
 
 def run():
@@ -138,15 +142,22 @@ def run():
 
         logger.info("Found %d processed file(s) to chunk", len(json_files))
 
+        monitoring_cfg = config.get("monitoring", {})
+        anomaly_threshold = monitoring_cfg.get("chunk_drift_threshold_pct", 20.0)
+
         total_chunks = 0
         skipped = 0
+        all_chunk_lengths: list[int] = []
+        empty_files = 0
 
         for file_path in json_files:
             try:
-                count = process_file(file_path, chunk_cfg, output_dir)
+                count, lengths = process_file(file_path, chunk_cfg, output_dir)
                 if count > 0:
                     total_chunks += count
+                    all_chunk_lengths.extend(lengths)
                 else:
+                    empty_files += 1
                     skipped += 1
             except Exception as e:
                 logger.error("Failed to chunk %s: %s", file_path.name, e)
@@ -156,6 +167,34 @@ def run():
             "Chunking complete: %d files -> %d total chunks, %d skipped",
             len(json_files), total_chunks, skipped,
         )
+
+        # Chunk size metrics
+        if all_chunk_lengths:
+            avg_len = sum(all_chunk_lengths) / len(all_chunk_lengths)
+            min_len = min(all_chunk_lengths)
+            max_len = max(all_chunk_lengths)
+
+            tracker.add_metric("avg_chunk_length", round(avg_len, 1))
+            tracker.add_metric("min_chunk_length", min_len)
+            tracker.add_metric("max_chunk_length", max_len)
+            tracker.add_metric("empty_files", empty_files)
+
+            logger.info(
+                "Chunk size stats: avg=%.1f, min=%d, max=%d",
+                avg_len, min_len, max_len,
+            )
+
+            # Anomaly detection: compare with previous run
+            prev_avg = PipelineTracker.get_previous_metric("chunk", "avg_chunk_length")
+            if prev_avg is not None and prev_avg > 0:
+                drift_pct = abs(avg_len - prev_avg) / prev_avg * 100
+                tracker.add_metric("chunk_size_drift_pct", round(drift_pct, 1))
+                if drift_pct > anomaly_threshold:
+                    logger.warning(
+                        "ANOMALY: avg chunk length drifted %.1f%% (current=%.1f, previous=%.1f)",
+                        drift_pct, avg_len, prev_avg,
+                    )
+
         tracker.record(items_in=len(json_files), items_out=total_chunks, items_skipped=skipped)
 
 

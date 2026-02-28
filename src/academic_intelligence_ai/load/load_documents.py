@@ -144,10 +144,41 @@ def run():
 
         conn.commit()
 
-        # Encode all chunks in batches
+        # Detect empty or whitespace-only chunks
+        empty_chunks = sum(1 for t in all_texts if not t.strip())
+        if empty_chunks > 0:
+            logger.warning("Detected %d empty/whitespace-only chunks", empty_chunks)
+        tracker.add_metric("empty_chunks", empty_chunks)
+
+        # Encode all chunks in batches with failure detection
         logger.info("Encoding %d chunks with %s (batch_size=%d)", len(all_texts), model_name, batch_size)
-        embeddings_np = model.encode(all_texts, batch_size=batch_size, show_progress_bar=False)
-        embeddings_np = np.array(embeddings_np).astype("float32")
+        dim = embedding_cfg.get("dimension", 384)
+        all_embeddings = []
+        embedding_failures = 0
+
+        for i in range(0, len(all_texts), batch_size):
+            batch_texts = all_texts[i : i + batch_size]
+            try:
+                batch_embeddings = model.encode(batch_texts, show_progress_bar=False)
+                all_embeddings.append(np.array(batch_embeddings).astype("float32"))
+            except Exception as e:
+                logger.error(
+                    "Embedding failed for batch %d-%d: %s",
+                    i, i + len(batch_texts), e,
+                )
+                embedding_failures += len(batch_texts)
+                all_embeddings.append(np.zeros((len(batch_texts), dim), dtype="float32"))
+
+        if embedding_failures > 0:
+            logger.warning(
+                "ALERT: %d chunks failed embedding (out of %d total)",
+                embedding_failures, len(all_texts),
+            )
+
+        tracker.add_metric("embedding_failures", embedding_failures)
+        tracker.add_metric("total_chunks_embedded", len(all_texts) - embedding_failures)
+
+        embeddings_np = np.vstack(all_embeddings).astype("float32")
 
         # Build FAISS index (cosine similarity via normalized inner product)
         faiss.normalize_L2(embeddings_np)
@@ -163,7 +194,11 @@ def run():
             doc_count, len(all_texts), index.ntotal, embeddings_np.shape[1], db_path.name,
         )
 
-        tracker.record(items_in=len(json_files), items_out=len(all_texts), items_skipped=0)
+        tracker.record(
+            items_in=len(json_files),
+            items_out=len(all_texts) - embedding_failures,
+            items_skipped=embedding_failures,
+        )
         conn.close()
 
 

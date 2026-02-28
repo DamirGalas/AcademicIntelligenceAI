@@ -107,3 +107,4 @@ monitoring:
   log_file: "logs/pipeline.log"
   track_drift: true
   drift_check_interval_hours: 24
+  chunk_drift_threshold_pct: 20.0
