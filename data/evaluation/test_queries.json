@@ -1,0 +1,102 @@
+[
+  {
+    "query": "Koliko godina traju osnovne studije matematike?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "Matematika (3 godine, 180 ESPB)"
+  },
+  {
+    "query": "Koliko traju master studije matematike?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "Matematika (2 godine, 120 ESPB)"
+  },
+  {
+    "query": "Koliko traje program diplomiranog matematičara?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "4 godine, 240 ESPB"
+  },
+  {
+    "query": "Ko je rukovodilac studijskog programa matematike?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "Rozalija Madaras"
+  },
+  {
+    "query": "Koji moduli postoje na primenjenoj matematici?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "Analitika podataka i statistika"
+  },
+  {
+    "query": "Koliko traje program Master profesor matematike?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "5 godina, 300"
+  },
+  {
+    "query": "Postoji li master iz Data Science na PMF-u?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "Data Science"
+  },
+  {
+    "query": "Ko je rukovodilac doktorskih studija matematike?",
+    "expected_source": "dmi_programs",
+    "expected_text_fragment": "Marko Nedeljkov"
+  },
+  {
+    "query": "Koliko pitanja ima na prijemnom ispitu iz fizike?",
+    "expected_source": "df_prijemni",
+    "expected_text_fragment": "30 pitanja"
+  },
+  {
+    "query": "Koliko bodova je potrebno da se položi prijemni iz fizike?",
+    "expected_source": "df_prijemni",
+    "expected_text_fragment": "najmanje 14 bodova"
+  },
+  {
+    "query": "Šta je dozvoljeno koristiti na prijemnom ispitu iz fizike?",
+    "expected_source": "df_prijemni",
+    "expected_text_fragment": "lenjir i kalkulator"
+  },
+  {
+    "query": "Ko je oslobođen polaganja prijemnog ispita?",
+    "expected_source": "df_prijemni",
+    "expected_text_fragment": "republičkom takmičenju"
+  },
+  {
+    "query": "Gde se nalazi Departman za fiziku?",
+    "expected_source": "df_main",
+    "expected_text_fragment": "Trg Dositeja Obradovića 4"
+  },
+  {
+    "query": "Ko je dobio Nobelovu nagradu za fiziku 2025?",
+    "expected_source": "df_main",
+    "expected_text_fragment": "Nobelova nagrada za fiziku za 2025"
+  },
+  {
+    "query": "Koji je novi tekući račun PMF-a?",
+    "expected_source": "df_main",
+    "expected_text_fragment": "840-32804845-47"
+  },
+  {
+    "query": "Šta je akcija Budi student jedan dan?",
+    "expected_source": "dmi_informatika_news",
+    "expected_text_fragment": "Budi student jedan dan"
+  },
+  {
+    "query": "Gde su studenti informatike bili na zimskoj školi?",
+    "expected_source": "dmi_informatika_news",
+    "expected_text_fragment": "Lisabonu"
+  },
+  {
+    "query": "Koji tim je učestvovao na Serbian Cybersecurity Challenge?",
+    "expected_source": "dmi_informatika_news",
+    "expected_text_fragment": "Petar Pilipović"
+  },
+  {
+    "query": "Koji je email za upis na informatiku?",
+    "expected_source": "dmi_informatika_news",
+    "expected_text_fragment": "upis@dmi.rs"
+  },
+  {
+    "query": "Kada je dodatni januarski ispitni rok?",
+    "expected_source": "dmi_informatika_news",
+    "expected_text_fragment": "26. do 30. januara 2026"
+  }
+]
