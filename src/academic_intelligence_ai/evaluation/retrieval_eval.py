@@ -103,5 +103,5 @@ def evaluate(test_file: Path, top_k: int = 5):
 
 
 if __name__ == "__main__":
-    test_file = PROJECT_ROOT / "data" / "evaluation" / "test_queries.json"
+    test_file = PROJECT_ROOT / "data" / "evaluation" / "benchmark.json"
     evaluate(test_file)

@@ -55,7 +55,7 @@ Semantic search over indexed chunks.
 
 Measuring retrieval quality with quantitative metrics — a core AI engineering practice.
 
-- [x] Ground truth test set with 20 annotated queries (`data/evaluation/test_queries.json`)
+- [x] Ground truth test set with 20 annotated queries (`data/evaluation/benchmark.json`)
 - [x] Precision@1, Precision@3, Fragment Hit@5, MRR metrics (`evaluation/retrieval_eval.py`)
 - [x] Results: P@1=95%, P@3=95%, FragmentHit=75%, MRR=0.95
 
@@ -87,13 +87,17 @@ Tracking what users ask and how the system responds.
 
 - [x] `query_metrics` table in SQLite
 - [x] Tracked fields: query, num_chunks, top_score, avg_top3_score, fallback, prompt_tokens, response_tokens, llm_latency_ms, total_latency_ms
-- [ ] Observability deep-dive — before scaling up, fully understand every metric on the small dataset:
+- [x] Observability deep-dive — before scaling up, fully understand every metric on the small dataset:
   - Why is confidence low for certain queries? Inspect the actual chunks returned.
   - What does avg_top3_score tell you that top_score alone does not?
   - When does fallback trigger — is the threshold correct or too aggressive?
   - How does latency break down (retrieval vs LLM vs total)?
   - Run 20-30 manual queries, read the metrics, and document what you learn.
   - Identify weak spots in the current system *before* adding more data.
+  - **Findings (2026-03-09):** 12 manual queries, 50% fallback rate. Threshold 0.50
+    too aggressive for generic queries. avg_top3 ≈ top_score (uniform chunk quality).
+    LLM is the bottleneck (31s avg), retrieval fast (~2s). Some fallbacks are
+    unjustified (data exists but embedding misses paraphrases/typos).
 
 > **AI Note:** Observability is not just "log everything and move on." The real skill is
 > reading the data, understanding what it means, and acting on it. Scaling up with
@@ -110,12 +114,17 @@ Before scaling up, write down what we are building. Not a formal specification
 document — a short, clear file that captures scope and success criteria so every
 future checkpoint has a reference point.
 
-- [ ] Write `docs/SPEC.md` (1-2 pages max) covering:
-  - Target users: students, applicants, staff
-  - 5-10 example questions the system must answer well (admissions, programs, news, schedules)
-  - Data scope: which PMF pages/departments are in, which are out
-  - Quality targets: P@1 >= X%, end-to-end answer accuracy >= X%, latency < X ms
-  - Out of scope: what the system explicitly does NOT do
+- [x] Write `docs/SPEC.md` covering:
+  - [x] Target users: enrolled students and prospective students (applicants considering PMF)
+  - [x] Example questions: 40 questions in `docs/ASSUMED_QUESTIONS.md` (30 typical + 10 hard RAG eval)
+  - [x] Data scope: 6 crawled domains defined, in/out of scope documented
+  - [x] Out of scope: system explicitly does NOT do (Section 10 in SPEC.md)
+  - [x] Quality targets (finalized):
+    - P@1 ≥ 90% (strict: is top-1 result relevant?)
+    - Precision@3 ≥ 80% (strict: avg fraction of top-3 results that are relevant)
+    - Fallback rate ≤ 15% (achievable after CP12-15)
+    - Latency < 10s — **requires cloud or GPU LLM** (local Mistral ~33s, not viable)
+    - LLM: **GPT-4o-mini** (OpenAI cloud API, ~$0.0001/query, <2s latency)
 - [ ] Architecture diagrams (simple box-and-arrow, Mermaid or draw.io):
   - System context: the system as a black box with external actors (users, PMF website, LLM, storage)
   - Component diagram: ETL, vector store, retrieval, RAG orchestrator, config
@@ -145,7 +154,7 @@ already works — and you won't know until much later.
 - [ ] Integration tests: run the full pipeline (fetch -> clean -> chunk -> embed -> index)
   on a small set of local test HTML files and verify the output database and index are correct.
   - Use local files, not live URLs — tests must be deterministic and offline.
-- [ ] Retrieval regression tests: run the eval set (`data/evaluation/test_queries.json`)
+- [ ] Retrieval regression tests: run the eval set (`data/evaluation/benchmark.json`)
   against the current index and assert that P@1, MRR etc. are above defined thresholds.
   - This is the safety net for CP12-15. If someone changes chunking or retrieval and
     metrics drop, this test fails immediately.
@@ -220,32 +229,48 @@ re-embeds all existing content, wasting compute and time.
 
 ## Checkpoint 11: Scale — Web Crawler & Large Dataset (AI)
 
-**Status: TODO**
+**Status: IN PROGRESS** — crawler built and data collected; pipeline not yet run on full dataset
 
-The current system fetches 6 individual pages. A production system needs hundreds or
-thousands of pages. This is the difference between a demo and a real system.
+The crawler is built and has completed a full crawl of all 6 PMF domains. Raw data is on disk.
+The remaining work is running the transform → chunk → embed → index pipeline on this data,
+and re-evaluating retrieval quality at scale.
 
-- [ ] Recursive web crawler with link discovery on the same domain:
-  - Start from seed URLs in `config.yaml`
-  - Extract all `<a href>` links from each page
-  - Filter: only follow links within the same domain (e.g., `pmf.uns.ac.rs`)
-  - Normalize URLs: strip fragments (`#section`), resolve relative paths, lowercase
-- [ ] Configurable `max_depth` and `max_pages` per source
-- [ ] Politeness:
-  - Configurable delay between requests (e.g., 1-2 seconds)
-  - Parse and respect `robots.txt` (use `urllib.robotparser`)
-  - Set a descriptive `User-Agent` header
-- [ ] URL normalization and deduplication:
-  - Canonicalize URLs before inserting into the crawl queue
-  - Cross-reference with the `documents` table to skip already-indexed unchanged pages (from CP10)
-- [ ] Expand sources: more PMF departments, PDF documents, exam schedules
-- [ ] Target: 500+ pages indexed
-- [ ] After crawl completes: re-run retrieval eval (CP4) to verify quality didn't degrade
+Crawl results (2026-03-12):
+- pmf_uns: 2,736 HTML, 6,794 PDF, 364 docs
+- dmi: 898 HTML, 552 PDF
+- df: 292 HTML, 1,423 PDF
+- dh: 1,243 HTML, 398 PDF
+- dbe: 1,525 HTML, 484 PDF
+- dgt: 1,649 HTML, 2,150 PDF
+- **Total: ~8,343 HTML, ~11,800 PDF** (far exceeds 500+ target)
+
+- [x] Recursive web crawler with link discovery on the same domain:
+  - [x] Start from seed URLs in `config.yaml`
+  - [x] Extract all `<a href>` links from each page
+  - [x] Filter: only follow links within the same domain
+  - [x] Normalize URLs: strip fragments (`#section`), resolve relative paths
+  - [ ] Lowercase URL normalization (minor — no duplicates observed in practice)
+- [x] Configurable `max_pages` per source
+- [ ] Configurable `max_depth` (not implemented — `max_pages` is sufficient in practice)
+- [x] Politeness:
+  - [x] Configurable delay between requests
+  - [x] Parse and respect `robots.txt` (custom parser — not `urllib.robotparser`)
+  - [x] Descriptive `User-Agent` header
+- [x] URL normalization and deduplication (canonicalize before queue insert)
+- [ ] Cross-reference with `documents` table to skip already-indexed pages (requires CP10)
+- [x] Expand sources: 6 PMF departments crawled, PDF and Office docs downloaded
+- [x] Target: 500+ pages — **exceeded by 16x**
+- [ ] **Optional future source — UNS central site (`uns.ac.rs`)**:
+  - Contains general study regulations, credit transfer rules, and mobility procedures
+  - Relevant for hard questions (Q34, Q38): transfer from another faculty, cross-faculty credit recognition
+  - **Do not crawl yet** — evaluate first whether the 6 existing domains already cover these topics
+  - Add only if retrieval eval shows clear gaps that UNS central data would fill
+- [ ] After full pipeline run: re-run retrieval eval (CP4) to verify quality didn't degrade
 
 > **AI Note:** Data quality and quantity are the biggest levers in any AI system.
-> A perfect retrieval engine over 6 pages is less useful than a decent one over 600.
-> After scaling, expect eval metrics to change. More data means more noise, more
-> edge cases, and potentially lower precision. This is normal — measure, then improve.
+> The crawler has delivered the data. Now the question shifts: does retrieval quality
+> hold at 8,000+ pages vs. 6? More data means more noise and more edge cases.
+> Measure after indexing — do not assume quality improved just because more data exists.
 
 ---
 
@@ -282,6 +307,18 @@ The prompt is basic. This is the **highest-ROI improvement** you can make right
 now — small prompt changes have outsized impact on answer quality, and the effort
 is minimal compared to changing chunking or retrieval architecture.
 
+- [ ] Switch LLM from Ollama/Mistral to **GPT-4o-mini** (OpenAI API):
+  - Update `config/config.yaml`: `provider: openai`, `model: gpt-4o-mini`
+  - Add OpenAI client in `query/llm_client.py` alongside existing Ollama client
+  - Store API key in `.env` (never in config or code)
+- [ ] **Tool calling** — LLM decides when and how to search:
+  - Define a `search_knowledge_base` tool with OpenAI function calling schema
+  - LLM receives the user question and decides: answer directly OR call the tool
+  - LLM formulates its own search query (often better than raw user input)
+  - If tool is called: execute RAG retrieval, return chunks, LLM generates final answer
+  - If tool is not called: LLM responds directly (e.g., "Hvala" → no search needed)
+  - This is the foundation for CP16 (Agentic RAG) — learn the mechanic here, expand later
+  - Compare quality: tool calling vs. always-search baseline on the eval set
 - [ ] Few-shot examples in the system prompt:
   - Add 3-5 examples of (question, context, ideal_answer) directly in the prompt
   - These guide the LLM on tone, length, format, and when to say "I don't know"
@@ -461,13 +498,18 @@ which affect how you design:
   - Guard rails: where are the exit conditions (max steps, timeout, token budget)?
   - Store in `docs/architecture/`
 - [ ] Agent loop: LLM decides what to do next (search, answer, ask for clarification)
+  - Builds on single-tool calling from CP12 — expand to multi-step reasoning
   - Start with the simplest useful agent: "search, check confidence, re-search if low"
   - This 2-step pattern alone covers a large class of failed queries
 - [ ] Multi-step retrieval — agent breaks complex questions into sub-queries:
   - Example: "Uporedi predmete na informatici i matematici" -> two separate searches,
     then combine results
 - [ ] Query rewriting — agent reformulates the query if first search returns low-confidence results
-- [ ] Tool use: agent can call search, lookup specific document, check date, etc.
+- [ ] Expanded tool catalog (building on `search_knowledge_base` from CP12):
+  - `search_knowledge_base` — semantic search over indexed chunks (already built in CP12)
+  - `lookup_document` — retrieve full document by URL/ID
+  - `check_freshness` — verify if source data is current
+  - `get_department_contacts` — structured contact lookup
   - Define tools as functions with clear input/output schemas
 - [ ] Reasoning trace — log each agent step (thought, action, observation) for debugging
 - [ ] Guard rails — max iterations (e.g., 5), timeout (e.g., 15s), token budget per query
@@ -681,7 +723,7 @@ closes the loop and lets the system improve from real usage.
 | 8 | Testing | TODO |
 | 9 | CI/CD & Code Quality | TODO |
 | 10 | Incremental Pipeline & Deduplication | TODO |
-| 11 | Scale — Crawler & Large Dataset (AI) | TODO |
+| 11 | Scale — Crawler & Large Dataset (AI) | IN PROGRESS |
 | — | *Experiment Tracking (practice, not checkpoint)* | — |
 | 12 | Prompt Engineering & LLM Quality (AI) | TODO |
 | 13 | End-to-End RAG Evaluation (AI) | TODO |
@@ -695,7 +737,7 @@ closes the loop and lets the system improve from real usage.
 | 21 | Production Monitoring & Drift (AI) | TODO |
 | 22 | Frontend & User Feedback | TODO |
 
-**Current progress: Checkpoints 1-6 complete (foundation). Checkpoints 7-22 ahead (production).**
+**Current progress: Checkpoints 1-6 complete (foundation). CP11 crawler done, pipeline pending. Checkpoints 7-10 and 12-22 ahead (production).**
 
 Checkpoints marked with **(AI)** are competencies that separate an AI engineer from a
 software engineer who uses AI libraries. They require experimentation, measurement, and

@@ -2,70 +2,68 @@
 # Academic Intelligence AI - Configuration
 # ==============================
 
-# --- Data Sources ---
-# purpose: general_info | news | study_programs | department_info | student_events | admissions | admissions_tests | student_questions
+# --- Crawl Domains ---
+# Each domain is crawled recursively (BFS). HTML pages and PDF files are downloaded.
+# purpose: general_info | news | study_programs | department_info | student_events | admissions | admissions_tests
+crawl_domains:
+  - name: "pmf_uns"
+    purpose: "general_info"
+    base_url: "https://www.pmf.uns.ac.rs/"
+    enabled: true
+
+  - name: "dmi"
+    purpose: "department_info"
+    base_url: "https://www.dmi.uns.ac.rs/"
+    enabled: true
+
+  - name: "df"
+    purpose: "department_info"
+    base_url: "http://www.df.uns.ac.rs/"
+    enabled: true
+
+  - name: "dh"
+    purpose: "department_info"
+    base_url: "https://www.dh.uns.ac.rs/"
+    enabled: true
+
+  - name: "dbe"
+    purpose: "department_info"
+    base_url: "https://wwwold.dbe.pmf.uns.ac.rs/"
+    enabled: true
+
+  - name: "dgt"
+    purpose: "department_info"
+    base_url: "https://www.dgt.uns.ac.rs/"
+    enabled: true
+
+# --- Crawler Settings ---
+crawler:
+  delay_seconds: 0.5
+  max_pages_per_domain: 15000  # safety limit per domain (faculty sites are typically < 3000)
+  request_timeout: 15
+  user_agent: "AcademicIntelligenceAI/0.1 (educational research bot)"
+  download_pdfs: true
+  download_docs: true  # .doc, .docx, .xls, .xlsx, .ppt, .pptx
+  max_pdf_size_mb: 50
+  respect_robots_txt: true
+  # File extensions to skip (binary, media, etc.)
+  skip_extensions: [".jpg", ".jpeg", ".png", ".gif", ".svg", ".ico", ".webp",
+                     ".mp3", ".mp4", ".avi", ".mov", ".wmv",
+                     ".zip", ".rar", ".tar", ".gz",
+                     ".exe", ".dll", ".bin",
+                     ".css", ".js", ".woff", ".woff2", ".ttf", ".eot"]
+
+# --- Legacy single-page sources (kept for backwards compatibility) ---
 sources:
-  # PMF - News (centralni portal)
-  - name: "pmf_uns_vesti"
-    type: "html"
-    purpose: "news"
-    url: "https://www.pmf.uns.ac.rs/vesti/"
-    enabled: true
-
-  # Departman za matematiku i informatiku
-  - name: "dmi_programs"
-    type: "html"
-    purpose: "study_programs"
-    url: "https://matematika.pmf.uns.ac.rs/studije/studijski-programi/"
-    enabled: true
-
-  - name: "dmi_informatika_news"
-    type: "html"
-    purpose: "student_events"
-    url: "https://informatika.pmf.uns.ac.rs/"
-    enabled: true
-
-  - name: "dmi_main"
-    type: "html"
-    purpose: "department_info"
-    url: "https://dmistari.pmf.uns.ac.rs/"
-    enabled: false  # SSL certificate error
-
-  - name: "dmi_imenik"
-    type: "html"
-    purpose: "department_info"
-    url: "https://dmistari.pmf.uns.ac.rs/o_nama/imenik/"
-    enabled: false  # SSL certificate error
-
-  # Departman za fiziku
-  - name: "df_main"
-    type: "html"
-    purpose: "department_info"
-    url: "https://www.df.uns.ac.rs/"
-    enabled: true
-
-  - name: "df_upis"
-    type: "html"
-    purpose: "admissions"
-    url: "https://www.df.uns.ac.rs/studije/upis/"
-    enabled: true
-
-  - name: "df_prijemni"
-    type: "html"
-    purpose: "admissions_tests"
-    url: "https://www.df.uns.ac.rs/studije/upis/prijemni-ispit/"
-    enabled: true
-
-  # Student questions signal (requires Playwright/Selenium for dynamic content)
   - name: "reddit_pmf"
     type: "html"
     purpose: "student_questions"
     url: "https://www.reddit.com/r/StudentiSrbija/search/?q=pmf"
-    enabled: false
+    enabled: true
 
 # --- Transform ---
 transform:
-  min_text_length: 500
+  min_text_length: 200
   strip_tags: ["script", "style", "noscript", "header", "footer", "nav"]
 
 # --- Chunking ---

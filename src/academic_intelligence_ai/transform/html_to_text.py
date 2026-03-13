@@ -1,3 +1,5 @@
+"""Transform raw HTML files into structured JSON with clean text."""
+
 import json
 import re
 from pathlib import Path
@@ -35,49 +37,59 @@ def clean_html(html: str, strip_tags: list[str]) -> str:
     return text
 
 
-def build_source_map(config: dict) -> dict[str, str]:
-    """Build a mapping of source name -> purpose from config."""
-    return {s["name"]: s.get("purpose", "unknown") for s in config.get("sources", [])}
+def build_purpose_map(config: dict) -> dict[str, str]:
+    """Build a mapping of domain name -> purpose from crawl_domains config."""
+    result = {}
+    for d in config.get("crawl_domains", []):
+        result[d["name"]] = d.get("purpose", "unknown")
+    # Also include legacy single-page sources
+    for s in config.get("sources", []):
+        result[s["name"]] = s.get("purpose", "unknown")
+    return result
 
 
-def extract_metadata(file_path: Path, text: str, purpose: str) -> dict:
-    """Build metadata dict from the raw file and extracted text."""
-    return {
-        "source": file_path.stem,
-        "purpose": purpose,
-        "raw_filename": file_path.name,
-        "processed_at": datetime.now(timezone.utc).isoformat(),
-        "text_length": len(text),
-    }
-
-
-def process_file(file_path: Path, config: dict, source_map: dict[str, str]) -> bool:
+def process_html_file(
+    file_path: Path,
+    domain_name: str,
+    purpose: str,
+    strip_tags: list[str],
+    min_text_length: int,
+) -> bool:
     """Process a single raw HTML file into a structured JSON output.
 
     Returns True if processed successfully, False if skipped.
     """
-    transform_cfg = config.get("transform", {})
-    min_text_length = transform_cfg.get("min_text_length", 500)
-    strip_tags = transform_cfg.get("strip_tags", ["script", "style", "noscript", "header", "footer", "nav"])
-
     html = file_path.read_text(encoding="utf-8")
+    if not html.strip():
+        logger.warning("Empty raw file detected: %s", file_path.name)
+        return False
+
     text = clean_html(html, strip_tags)
 
     if len(text) < min_text_length:
-        logger.warning("Skipping %s: text too short (%d chars, minimum %d)", file_path.name, len(text), min_text_length)
+        logger.warning("Skipping %s: text too short (%d chars, minimum %d)",
+                        file_path.name, len(text), min_text_length)
         return False
-
-    purpose = source_map.get(file_path.stem, "unknown")
-    metadata = extract_metadata(file_path, text, purpose)
 
     processed_dir = PROJECT_ROOT / "data" / "processed"
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    output_path = processed_dir / f"{file_path.stem}.json"
+    # Use domain__filename to avoid collisions across domains
+    output_name = f"{domain_name}__{file_path.stem}"
+    output_path = processed_dir / f"{output_name}.json"
+
     payload = {
         "text": text,
-        "metadata": metadata,
+        "metadata": {
+            "source": domain_name,
+            "purpose": purpose,
+            "raw_filename": file_path.name,
+            "file_type": "html",
+            "processed_at": datetime.now(timezone.utc).isoformat(),
+            "text_length": len(text),
+        },
     }
+
     output_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -88,44 +100,66 @@ def process_file(file_path: Path, config: dict, source_map: dict[str, str]) -> b
 
 
 def run():
-    """Process all raw HTML files in data/raw/."""
-    with PipelineTracker("transform") as tracker:
+    """Process all raw HTML files from crawled domains (data/raw/{domain}/html/)."""
+    with PipelineTracker("transform_html") as tracker:
         config = load_config()
+        purpose_map = build_purpose_map(config)
+
+        transform_cfg = config.get("transform", {})
+        min_text_length = transform_cfg.get("min_text_length", 200)
+        strip_tags = transform_cfg.get("strip_tags", ["script", "style", "noscript", "header", "footer", "nav"])
+
         raw_dir = PROJECT_ROOT / "data" / "raw"
-
-        html_files = list(raw_dir.glob("*.html"))
-        if not html_files:
-            logger.warning("No HTML files found in %s", raw_dir)
-            tracker.record(items_in=0, items_out=0, items_skipped=0)
-            return
-
-        source_map = build_source_map(config)
-        logger.info("Found %d raw HTML file(s) to process", len(html_files))
-
         processed = 0
         skipped = 0
-        empty_files = 0
+        total = 0
 
-        for file_path in html_files:
-            try:
-                raw_html = file_path.read_text(encoding="utf-8")
-                if not raw_html.strip():
-                    logger.warning("Empty raw file detected: %s", file_path.name)
-                    empty_files += 1
+        # Process crawled domain directories: data/raw/{domain}/html/*.html
+        for domain_dir in sorted(raw_dir.iterdir()):
+            if not domain_dir.is_dir():
+                continue
+
+            html_dir = domain_dir / "html"
+            if not html_dir.exists():
+                continue
+
+            domain_name = domain_dir.name
+            purpose = purpose_map.get(domain_name, "unknown")
+            html_files = list(html_dir.glob("*.html"))
+
+            logger.info("Found %d HTML file(s) for domain: %s", len(html_files), domain_name)
+            total += len(html_files)
+
+            for file_path in html_files:
+                try:
+                    if process_html_file(file_path, domain_name, purpose, strip_tags, min_text_length):
+                        processed += 1
+                    else:
+                        skipped += 1
+                except Exception as e:
+                    logger.error("Failed to process %s: %s", file_path.name, e)
                     skipped += 1
-                    continue
-                if process_file(file_path, config, source_map):
-                    processed += 1
-                else:
+
+        # Also process any legacy flat HTML files in data/raw/*.html
+        legacy_files = list(raw_dir.glob("*.html"))
+        if legacy_files:
+            logger.info("Found %d legacy HTML file(s) in data/raw/", len(legacy_files))
+            total += len(legacy_files)
+            for file_path in legacy_files:
+                try:
+                    domain_name = file_path.stem
+                    purpose = purpose_map.get(domain_name, "unknown")
+                    if process_html_file(file_path, domain_name, purpose, strip_tags, min_text_length):
+                        processed += 1
+                    else:
+                        skipped += 1
+                except Exception as e:
+                    logger.error("Failed to process %s: %s", file_path.name, e)
                     skipped += 1
-            except Exception as e:
-                logger.error("Failed to process %s: %s", file_path.name, e)
-                skipped += 1
 
-        tracker.add_metric("empty_files", empty_files)
-
-        logger.info("Transform complete: %d processed, %d skipped", processed, skipped)
-        tracker.record(items_in=len(html_files), items_out=processed, items_skipped=skipped)
+        logger.info("HTML transform complete: %d processed, %d skipped out of %d total",
+                     processed, skipped, total)
+        tracker.record(items_in=total, items_out=processed, items_skipped=skipped)
 
 
 if __name__ == "__main__":
