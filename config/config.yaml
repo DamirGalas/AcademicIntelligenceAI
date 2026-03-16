@@ -65,6 +65,7 @@ sources:
 transform:
   min_text_length: 200
   strip_tags: ["script", "style", "noscript", "header", "footer", "nav"]
+  pdf_max_pages: 500
 
 # --- Chunking ---
 chunking:

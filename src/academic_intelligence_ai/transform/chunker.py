@@ -1,37 +1,85 @@
+"""Chunk processed text into retrieval-ready pieces.
+
+Reads JSON files from data/processed/, splits text using a character-based
+sliding window with word-boundary respect, and writes chunked JSON files
+to data/chunked/.
+"""
+
 import json
 from pathlib import Path
 
 import yaml
 
 from academic_intelligence_ai.monitoring.logger import get_logger
-from academic_intelligence_ai.monitoring.pipeline_tracker import PipelineTracker
 
 logger = get_logger("transform.chunker")
 
-# Project root: 4 levels up (transform -> academic_intelligence_ai -> src -> root)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
-def load_config() -> dict:
-    """Load configuration from config/config.yaml."""
-    config_path = PROJECT_ROOT / "config" / "config.yaml"
-    with open(config_path) as f:
-        return yaml.safe_load(f)
+# --- Public API ---
 
 
-def chunk_text(text: str, chunk_size: int, chunk_overlap: int, min_chunk_size: int) -> list[dict]:
+def run():
+    """Chunk all processed files and save to data/chunked/.
+
+    Reads chunking config from config.yaml, processes each JSON file in
+    data/processed/, and writes one output file per input to data/chunked/.
+    """
+    config = _load_config()
+    chunk_cfg = config.get("chunking", {})
+    chunk_size = chunk_cfg.get("chunk_size", 400)
+    chunk_overlap = chunk_cfg.get("chunk_overlap", 80)
+    min_chunk_size = chunk_cfg.get("min_chunk_size", 50)
+
+    processed_dir = PROJECT_ROOT / "data" / "processed"
+    output_dir = PROJECT_ROOT / "data" / "chunked"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    files = sorted(processed_dir.glob("*.json"))
+    if not files:
+        logger.warning("No processed files found in %s", processed_dir)
+        return 0
+
+    logger.info("Chunking %d processed files (size=%d, overlap=%d, min=%d)",
+                len(files), chunk_size, chunk_overlap, min_chunk_size)
+
+    total_chunks = 0
+    skipped = 0
+
+    for i, file_path in enumerate(files, 1):
+        try:
+            count = _chunk_one(file_path, output_dir,
+                               chunk_size, chunk_overlap, min_chunk_size)
+            total_chunks += count
+        except Exception as e:
+            logger.error("Failed to chunk %s: %s", file_path.name, e)
+            skipped += 1
+
+        if i % 2000 == 0:
+            logger.info("Progress: %d/%d files chunked (%d chunks so far)",
+                        i, len(files), total_chunks)
+
+    logger.info("Chunking complete: %d files -> %d chunks (%d skipped)",
+                len(files), total_chunks, skipped)
+    return total_chunks
+
+
+# --- Core chunking logic ---
+
+
+def chunk_text(text: str, chunk_size: int, chunk_overlap: int,
+               min_chunk_size: int) -> list[dict]:
     """Split text into overlapping chunks respecting word boundaries.
 
-    Uses a character-based sliding window. When the window end lands
-    mid-word, it backs up to the last whitespace so no word is cut.
-    Chunks shorter than min_chunk_size are discarded.
-
-    Returns a list of dicts with keys: chunk_index, text, char_offset, chunk_length.
+    Returns a list of dicts: {chunk_index, text, char_offset, chunk_length}.
     """
-    if len(text) <= chunk_size:
-        if len(text) >= min_chunk_size:
-            return [{"chunk_index": 0, "text": text, "char_offset": 0, "chunk_length": len(text)}]
+    if not text or len(text) < min_chunk_size:
         return []
+
+    if len(text) <= chunk_size:
+        return [{"chunk_index": 0, "text": text,
+                 "char_offset": 0, "chunk_length": len(text)}]
 
     chunks = []
     start = 0
@@ -39,16 +87,11 @@ def chunk_text(text: str, chunk_size: int, chunk_overlap: int, min_chunk_size: i
     while start < len(text):
         end = start + chunk_size
 
+        # Last chunk: take everything remaining
         if end >= len(text):
-            # Last chunk: take everything remaining
             chunk = text[start:].strip()
             if len(chunk) >= min_chunk_size:
-                chunks.append({
-                    "chunk_index": len(chunks),
-                    "text": chunk,
-                    "char_offset": start,
-                    "chunk_length": len(chunk),
-                })
+                chunks.append(_make_chunk(len(chunks), chunk, start))
             break
 
         # Back up to last space to avoid cutting mid-word
@@ -56,146 +99,76 @@ def chunk_text(text: str, chunk_size: int, chunk_overlap: int, min_chunk_size: i
         while boundary > start and text[boundary] != " ":
             boundary -= 1
 
-        # If no space found (one huge word), force-cut at chunk_size
+        # If no space found (one huge token), force-cut at chunk_size
         if boundary == start:
             boundary = end
 
         chunk = text[start:boundary].strip()
         if len(chunk) >= min_chunk_size:
-            chunks.append({
-                "chunk_index": len(chunks),
-                "text": chunk,
-                "char_offset": start,
-                "chunk_length": len(chunk),
-            })
+            chunks.append(_make_chunk(len(chunks), chunk, start))
 
         step = boundary - start - chunk_overlap
-        if step <= 0:
-            step = 1
-        start = start + step
+        start += max(step, 1)
 
     return chunks
 
 
-def process_file(file_path: Path, chunk_cfg: dict, output_dir: Path) -> tuple[int, list[int]]:
-    """Chunk a single processed JSON file.
+# --- Internal helpers ---
 
-    Returns (num_chunks, list_of_chunk_lengths).
-    """
-    chunk_size = chunk_cfg.get("chunk_size", 400)
-    chunk_overlap = chunk_cfg.get("chunk_overlap", 80)
-    min_chunk_size = chunk_cfg.get("min_chunk_size", 50)
 
+def _chunk_one(file_path: Path, output_dir: Path,
+               chunk_size: int, chunk_overlap: int,
+               min_chunk_size: int) -> int:
+    """Chunk a single processed JSON file and write to output_dir."""
     payload = json.loads(file_path.read_text(encoding="utf-8"))
     text = payload["text"]
     meta = payload["metadata"]
 
     chunks = chunk_text(text, chunk_size, chunk_overlap, min_chunk_size)
-
     if not chunks:
-        logger.warning("No chunks produced for %s (text_length=%d)", meta["source"], len(text))
-        return 0, []
+        return 0
 
     output = {
-        "source": meta["source"],
-        "purpose": meta.get("purpose", "unknown"),
-        "raw_filename": meta["raw_filename"],
-        "processed_at": meta["processed_at"],
-        "full_text_length": meta["text_length"],
-        "chunk_config": {
-            "chunk_size": chunk_size,
-            "chunk_overlap": chunk_overlap,
-            "min_chunk_size": min_chunk_size,
+        "metadata": {
+            "source": meta["source"],
+            "file_type": meta["file_type"],
+            "raw_filename": meta["raw_filename"],
+            "url": meta.get("url", ""),
+            "text_hash": meta["text_hash"],
+            "full_text_length": meta["text_length"],
+            "chunk_count": len(chunks),
+            "chunk_config": {
+                "chunk_size": chunk_size,
+                "chunk_overlap": chunk_overlap,
+                "min_chunk_size": min_chunk_size,
+            },
         },
         "chunks": chunks,
     }
 
-    output_path = output_dir / f"{meta['source']}.json"
+    output_path = output_dir / file_path.name
     output_path.write_text(
         json.dumps(output, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-
-    lengths = [c["chunk_length"] for c in chunks]
-    logger.info(
-        "Chunked %s -> %d chunks (avg %.0f chars)",
-        meta["source"], len(chunks), sum(lengths) / len(lengths),
-    )
-    return len(chunks), lengths
+    return len(chunks)
 
 
-def run():
-    """Chunk all processed JSON files in data/processed/."""
-    with PipelineTracker("chunk") as tracker:
-        config = load_config()
-        chunk_cfg = config.get("chunking", {})
+def _make_chunk(index: int, text: str, offset: int) -> dict:
+    """Build a single chunk dict."""
+    return {
+        "chunk_index": index,
+        "text": text,
+        "char_offset": offset,
+        "chunk_length": len(text),
+    }
 
-        processed_dir = PROJECT_ROOT / "data" / "processed"
-        output_dir = PROJECT_ROOT / "data" / "chunked"
-        output_dir.mkdir(parents=True, exist_ok=True)
 
-        json_files = list(processed_dir.glob("*.json"))
-        if not json_files:
-            logger.warning("No processed JSON files found in %s", processed_dir)
-            tracker.record(items_in=0, items_out=0, items_skipped=0)
-            return
-
-        logger.info("Found %d processed file(s) to chunk", len(json_files))
-
-        monitoring_cfg = config.get("monitoring", {})
-        anomaly_threshold = monitoring_cfg.get("chunk_drift_threshold_pct", 20.0)
-
-        total_chunks = 0
-        skipped = 0
-        all_chunk_lengths: list[int] = []
-        empty_files = 0
-
-        for file_path in json_files:
-            try:
-                count, lengths = process_file(file_path, chunk_cfg, output_dir)
-                if count > 0:
-                    total_chunks += count
-                    all_chunk_lengths.extend(lengths)
-                else:
-                    empty_files += 1
-                    skipped += 1
-            except Exception as e:
-                logger.error("Failed to chunk %s: %s", file_path.name, e)
-                skipped += 1
-
-        logger.info(
-            "Chunking complete: %d files -> %d total chunks, %d skipped",
-            len(json_files), total_chunks, skipped,
-        )
-
-        # Chunk size metrics
-        if all_chunk_lengths:
-            avg_len = sum(all_chunk_lengths) / len(all_chunk_lengths)
-            min_len = min(all_chunk_lengths)
-            max_len = max(all_chunk_lengths)
-
-            tracker.add_metric("avg_chunk_length", round(avg_len, 1))
-            tracker.add_metric("min_chunk_length", min_len)
-            tracker.add_metric("max_chunk_length", max_len)
-            tracker.add_metric("empty_files", empty_files)
-
-            logger.info(
-                "Chunk size stats: avg=%.1f, min=%d, max=%d",
-                avg_len, min_len, max_len,
-            )
-
-            # Anomaly detection: compare with previous run
-            prev_avg = PipelineTracker.get_previous_metric("chunk", "avg_chunk_length")
-            if prev_avg is not None and prev_avg > 0:
-                drift_pct = abs(avg_len - prev_avg) / prev_avg * 100
-                tracker.add_metric("chunk_size_drift_pct", round(drift_pct, 1))
-                if drift_pct > anomaly_threshold:
-                    logger.warning(
-                        "ANOMALY: avg chunk length drifted %.1f%% (current=%.1f, previous=%.1f)",
-                        drift_pct, avg_len, prev_avg,
-                    )
-
-        tracker.record(items_in=len(json_files), items_out=total_chunks, items_skipped=skipped)
+def _load_config() -> dict:
+    """Load configuration from config/config.yaml."""
+    config_path = PROJECT_ROOT / "config" / "config.yaml"
+    with open(config_path) as f:
+        return yaml.safe_load(f)
 
 
 if __name__ == "__main__":
