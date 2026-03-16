@@ -22,10 +22,10 @@ def load_config() -> dict:
         return yaml.safe_load(f)
 
 
-def run(limit: int = 0) -> list[KeptFile]:
+def run(limit: int = 0) -> tuple[list[KeptFile], dict[str, dict[str, int]]]:
     """Filter raw files across all domains. Limit=0 means no limit.
 
-    Returns a list of KeptFile entries that passed all filters.
+    Returns (kept_files, stats) where stats is {stats_key: {reason: count}}.
     """
     config = load_config()
     transform_cfg = config.get("transform", {})
@@ -46,7 +46,7 @@ def run(limit: int = 0) -> list[KeptFile]:
     # _run_docs_filter(raw_dir, ..., seen_hashes, stats, limit, kept)
 
     _print_report(stats)
-    return kept
+    return kept, stats
 
 
 # --- Per-type filter runners ---
@@ -196,5 +196,5 @@ def _print_report(stats: dict[str, dict[str, int]]):
 
 
 if __name__ == "__main__":
-    kept = run(limit=100)
+    kept, stats = run(limit=100)
     logger.info("Kept %d files ready for processing", len(kept))

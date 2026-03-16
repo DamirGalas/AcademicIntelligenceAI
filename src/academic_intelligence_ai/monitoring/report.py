@@ -1,17 +1,12 @@
-import sqlite3
-from pathlib import Path
-
+from academic_intelligence_ai.db.connection import get_connection
 from academic_intelligence_ai.monitoring.logger import get_logger
 
 logger = get_logger("monitoring.report")
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DB_PATH = PROJECT_ROOT / "data" / "academic.db"
-
 STEPS = ["extract", "transform", "chunk", "load"]
 
 
-def _get_last_two_runs(conn: sqlite3.Connection, step: str) -> list[dict]:
+def _get_last_two_runs(conn, step: str) -> list[dict]:
     """Get the last two runs for a given step, newest first."""
     rows = conn.execute(
         """
@@ -69,10 +64,7 @@ def _diff_indicator(current, previous) -> str:
 
 def generate_report() -> str:
     """Generate a comparison report of the last two pipeline runs."""
-    if not DB_PATH.exists():
-        return "No database found. Run the pipeline first."
-
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     lines = ["", "=" * 60, "  PIPELINE REPORT — Last vs Previous", "=" * 60]
 
     for step in STEPS:
