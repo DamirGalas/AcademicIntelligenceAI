@@ -73,6 +73,10 @@ chunking:
   chunk_overlap: 80
   min_chunk_size: 50
 
+# --- Load ---
+load:
+  limit: 5  # 0 = all files, >0 = first N chunked files (for progressive scaling)
+
 # --- Embedding ---
 embedding:
   model: "paraphrase-multilingual-MiniLM-L12-v2"

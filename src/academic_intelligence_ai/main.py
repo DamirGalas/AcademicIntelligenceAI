@@ -1,7 +1,7 @@
 from academic_intelligence_ai.ingest.run_extract import run as run_extract
 from academic_intelligence_ai.transform.html_to_text import run as run_transform
 from academic_intelligence_ai.transform.chunker import run as run_chunk
-from academic_intelligence_ai.load.load_documents import run as run_load
+from academic_intelligence_ai.load.run import run as run_load
 from academic_intelligence_ai.monitoring.logger import get_logger
 from academic_intelligence_ai.monitoring.report import print_report
 
