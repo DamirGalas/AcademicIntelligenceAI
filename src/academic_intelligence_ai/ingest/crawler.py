@@ -416,6 +416,12 @@ def crawl_domain(
                 time.sleep(delay)
                 continue
 
+            # Some academic sites declare ISO-8859-1 in HTTP headers (or omit charset
+            # entirely, causing requests to default to ISO-8859-1 per RFC 2616).
+            # Override with content-based detection when header charset is unreliable.
+            declared = (resp.encoding or "").upper()
+            if declared in ("ISO-8859-1", "LATIN-1", "ASCII", ""):
+                resp.encoding = resp.apparent_encoding
             html = resp.text
             slug = slugify_url(url)
             html_path = html_dir / f"{slug}.html"

@@ -96,6 +96,12 @@ query:
   confidence_threshold: 0.5
   retrieval_multiplier: 3    # fetch top_k * N from FAISS before post-filtering
   high_relevance_boost: 1.2  # score multiplier for high-relevance documents
+  exclude_pdfs: true
+  allowed_categories:  # only these categories pass the filter (null = allow all)
+    - department-info
+    - news-announcements
+    - staff-pages
+    - study-programs
 
 # --- LLM ---
 llm:

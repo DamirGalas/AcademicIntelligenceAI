@@ -42,6 +42,7 @@ class Searcher:
         self.high_relevance_boost = query_cfg.get("high_relevance_boost", 1.2)
         self.relevance_filter = True  # can be disabled for eval baselines
         self.exclude_pdfs = query_cfg.get("exclude_pdfs", True)
+        self.allowed_categories: list[str] | None = query_cfg.get("allowed_categories", None)
 
         logger.info("Loading embedding model: %s", model_name)
         self.model = SentenceTransformer(model_name)
@@ -57,7 +58,7 @@ class Searcher:
             self.index.ntotal, len(self.metadata),
         )
 
-    def search(self, query: str, top_k: int | None = None) -> list[dict]:
+    def search(self, query: str, top_k: int | None = None, category_filter: str | None = None) -> list[dict]:
         """Search for the most relevant chunks given a query string.
 
         Returns a list of dicts with keys: score, source, purpose, chunk_index, text.
@@ -97,13 +98,18 @@ class Searcher:
             chunk_id = meta["chunk_id"]
             doc_id = meta["doc_id"]
 
-            # Look up relevance label — skip none, boost high
+            # Look up relevance and category — filter and boost
             doc_row = self.conn.execute(
-                "SELECT relevance FROM documents WHERE id = ?", (doc_id,)
+                "SELECT relevance, category FROM documents WHERE id = ?", (doc_id,)
             ).fetchone()
             relevance = doc_row[0] if doc_row else "none"
+            category = doc_row[1] if doc_row else ""
 
             if self.relevance_filter and relevance == "none":
+                continue
+
+            effective_categories = [category_filter] if category_filter else self.allowed_categories
+            if effective_categories is not None and category not in effective_categories:
                 continue
 
             boosted_score = score * self.high_relevance_boost if relevance == "high" else score
@@ -125,7 +131,15 @@ class Searcher:
                 "text": row[0],
             })
 
-        # Re-sort after boosting and trim to requested top_k
+        # Deduplicate by URL — keep only the highest-scoring chunk per page
+        seen_urls: dict[str, dict] = {}
+        for r in results:
+            url = r["url"]
+            if url not in seen_urls or r["score"] > seen_urls[url]["score"]:
+                seen_urls[url] = r
+        results = list(seen_urls.values())
+
+        # Re-sort after boosting and deduplication, trim to requested top_k
         results.sort(key=lambda x: x["score"], reverse=True)
         results = results[:top_k]
 

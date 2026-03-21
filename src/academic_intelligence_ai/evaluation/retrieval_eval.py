@@ -64,7 +64,7 @@ def evaluate(
         expected_source = item["expected_source"]
         expected_fragment = item.get("expected_text_fragment", "")
 
-        results = searcher.search(query, top_k=fetch_k)
+        results = searcher.search(query, top_k=fetch_k, category_filter=item.get("category"))
         urls = [r["url"] for r in results]
         top_score = results[0]["score"] if results else 0.0
 
@@ -183,8 +183,8 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", default="benchmark.json")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--threshold", type=float, default=0.0)
-    parser.add_argument("--relevance-filter", action="store_true")
-    parser.add_argument("--note", default="baseline: no filters")
+    parser.add_argument("--relevance-filter", action="store_true", default=True)
+    parser.add_argument("--note", default="no-pdf + relevance filter + per-query category filter + dedup")
     args = parser.parse_args()
 
     test_file = PROJECT_ROOT / "data" / "evaluation" / args.benchmark

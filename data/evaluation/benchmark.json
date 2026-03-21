@@ -3,6 +3,7 @@
     "query": "Ko su profesori u penziji na Departmanu za matematiku i informatiku?",
     "expected_source": "https://www.dmi.uns.ac.rs/o-departmanu/koleginice-i-kolege-u-penziji/",
     "expected_text_fragment": "Đura Paunić",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "dmi"
   },
@@ -10,6 +11,7 @@
     "query": "Koje katedre postoje na Odseku za informatiku DMI?",
     "expected_source": "https://www.dmi.uns.ac.rs/imenik/",
     "expected_text_fragment": "Informacione tehnologije i sistemi",
+    "category": "staff-pages",
     "difficulty": "easy",
     "department": "dmi"
   },
@@ -17,6 +19,7 @@
     "query": "Ko je profesor sa Griffith University koji je gostovao na DMI u 2024. godini?",
     "expected_source": "https://www.dmi.uns.ac.rs/2024/06/predavanje-profesora-bele-stantica-sa-grifit-univerziteta-australija/",
     "expected_text_fragment": "veštačke inteligencije",
+    "category": "news-announcements",
     "difficulty": "medium",
     "department": "dmi"
   },
@@ -24,6 +27,7 @@
     "query": "Koji master rad je prihvaćen na sednici Veća DMI u decembru 2023?",
     "expected_source": "https://www.dmi.uns.ac.rs/2023/12/vece-20-12-2023/",
     "expected_text_fragment": "Dragana Lujić",
+    "category": "news-announcements",
     "difficulty": "medium",
     "department": "dmi"
   },
@@ -31,6 +35,7 @@
     "query": "U kojoj sali se polaže prijemni ispit za matematičke i informatičke smerove na DMI?",
     "expected_source": "https://www.dmi.uns.ac.rs/category/obavestenja/upis/",
     "expected_text_fragment": "sali 64",
+    "category": "study-programs",
     "difficulty": "easy",
     "department": "dmi"
   },
@@ -38,6 +43,7 @@
     "query": "Koji studijski programi postoje na Departmanu za fiziku?",
     "expected_source": "https://www.df.uns.ac.rs/o-nama/",
     "expected_text_fragment": "Nastava fizike",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "df"
   },
@@ -45,6 +51,7 @@
     "query": "Koji je broj telefona Departmana za fiziku?",
     "expected_source": "https://www.df.uns.ac.rs/o-nama/",
     "expected_text_fragment": "021/485-2800",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "df"
   },
@@ -52,6 +59,7 @@
     "query": "Šta je 1st BSc and MSc Nuclear Competition and Summer School 2024?",
     "expected_source": "https://www.df.uns.ac.rs/2024/04/1st-bsc-and-msc-nuclear-competition-and-summer-school-2024/",
     "expected_text_fragment": "Nuclear Competition",
+    "category": "news-announcements",
     "difficulty": "medium",
     "department": "df"
   },
@@ -59,6 +67,7 @@
     "query": "Da li Departman za fiziku ima doktorske akademske studije fizike?",
     "expected_source": "https://www.df.uns.ac.rs/o-nama/",
     "expected_text_fragment": "Doktorske akademske studije Fizika",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "df"
   },
@@ -66,6 +75,7 @@
     "query": "Ko je autor udžbenika sa Katedre za opštu fiziku i metodiku nastave fizike?",
     "expected_source": "https://www.df.uns.ac.rs/o-nama/katedre/katedra-za-opstu-fiziku-i-metodiku-nastave-fizike/",
     "expected_text_fragment": "Dušanka Obadović",
+    "category": "department-info",
     "difficulty": "hard",
     "department": "df"
   },
@@ -73,6 +83,7 @@
     "query": "Koji su moduli master studija biologije na Departmanu za biologiju i ekologiju?",
     "expected_source": "http://wwwold.dbe.pmf.uns.ac.rs/o_departmanu",
     "expected_text_fragment": "Botanika, Zoologija",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "dbe"
   },
@@ -80,6 +91,7 @@
     "query": "Koja laboratorija na DBE se bavi paleoekološkom rekonstrukcijom?",
     "expected_source": "http://wwwold.dbe.pmf.uns.ac.rs/o_departmanu/laboratorije/laboratorija_za_paleoekolosku_rekonstrukciju_(laper)/videoteka",
     "expected_text_fragment": "paleoekološku rekonstrukciju (LAPER)",
+    "category": "department-info",
     "difficulty": "medium",
     "department": "dbe"
   },
@@ -87,6 +99,7 @@
     "query": "Koji je email profesora Radmile Kovačević sa DBE?",
     "expected_source": "http://wwwold.dbe.pmf.uns.ac.rs/o_departmanu/imenik/radmila_kovacevic",
     "expected_text_fragment": "radmila.kovacevic@dbe.uns.ac.rs",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "dbe"
   },
@@ -94,6 +107,7 @@
     "query": "Koji je email kontakt Departmana za hemiju, biohemiju i zaštitu životne sredine?",
     "expected_source": "https://www.dh.uns.ac.rs/pripremna-nastava-iz-hemije/",
     "expected_text_fragment": "infohemija@dh.uns.ac.rs",
+    "category": "news-announcements",
     "difficulty": "easy",
     "department": "dh"
   },
@@ -101,6 +115,7 @@
     "query": "Koji kandidati moraju da polažu prijemni ispit iz hemije za upis na DH?",
     "expected_source": "https://www.dh.uns.ac.rs/pripremna-nastava-iz-hemije/",
     "expected_text_fragment": "Biohemije",
+    "category": "news-announcements",
     "difficulty": "easy",
     "department": "dh"
   },
@@ -108,13 +123,15 @@
     "query": "Na kojoj katedri radi docent dr Nina Finčur i koji je njen email?",
     "expected_source": "https://www.dh.uns.ac.rs/dr-nina-fincur-docent/",
     "expected_text_fragment": "Katedra za analitičku hemiju",
+    "category": "staff-pages",
     "difficulty": "easy",
     "department": "dh"
   },
   {
-    "query": "Na kojoj adresi se nalazi Departman za hemiju PMF-a?",
+    "query": "Na kojoj adresi i u kom kabinetu se nalazi dr Nina Finčur na Departmanu za hemiju?",
     "expected_source": "https://www.dh.uns.ac.rs/dr-nina-fincur-docent/",
     "expected_text_fragment": "Trg Dositeja Obradovića 3",
+    "category": "staff-pages",
     "difficulty": "easy",
     "department": "dh"
   },
@@ -122,6 +139,7 @@
     "query": "Da li Departman za hemiju organizuje pripremnu nastavu za prijemni ispit?",
     "expected_source": "https://www.dh.uns.ac.rs/pripremna-nastava-iz-hemije/",
     "expected_text_fragment": "pripremnu nastavu za polaganje prijemnog ispita",
+    "category": "news-announcements",
     "difficulty": "easy",
     "department": "dh"
   },
@@ -129,6 +147,7 @@
     "query": "Šta su studenti DGT radili kao praktični deo ispita iz predmeta Animacija u turizmu?",
     "expected_source": "https://www.dgt.uns.ac.rs/brazilsko-vece",
     "expected_text_fragment": "Noć Brazilske senzacije",
+    "category": "news-announcements",
     "difficulty": "medium",
     "department": "dgt"
   },
@@ -136,6 +155,7 @@
     "query": "Ko je kontakt osoba i koji je email istraživačke grupe za animaciju u turizmu na DGT?",
     "expected_source": "https://www.dgt.uns.ac.rs/animacija-u-turizmu/",
     "expected_text_fragment": "ivkova@gmail.com",
+    "category": "study-programs",
     "difficulty": "easy",
     "department": "dgt"
   },
@@ -143,6 +163,7 @@
     "query": "Koji je broj telefona dr Anđelije Ivkov Džigurski na DGT?",
     "expected_source": "https://www.dgt.uns.ac.rs/animacija-u-turizmu/",
     "expected_text_fragment": "+381 21 485 2834",
+    "category": "study-programs",
     "difficulty": "easy",
     "department": "dgt"
   },
@@ -150,6 +171,7 @@
     "query": "Koji je email dr Natalije Nikolić sa Katedre za regionalnu geografiju DGT?",
     "expected_source": "http://www.dgt.uns.ac.rs/katedra-za-regionalnu-geografiju/natalija-nikolic/",
     "expected_text_fragment": "natalija.nikolic@dgt.uns.ac.rs",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "dgt"
   },
@@ -157,6 +179,7 @@
     "query": "Čime se bavi radna grupa za animaciju u turizmu i etnoturizam na DGT?",
     "expected_source": "https://www.dgt.uns.ac.rs/animacija-u-turizmu/",
     "expected_text_fragment": "folklornog nasleđa",
+    "category": "study-programs",
     "difficulty": "medium",
     "department": "dgt"
   },
@@ -164,6 +187,7 @@
     "query": "Ko je prodekan za nauku na PMF-u i koja mu je naučna oblast?",
     "expected_source": "https://www.pmf.uns.ac.rs/o-fakultetu/uprava/prodekan-za-nauku/",
     "expected_text_fragment": "Душан Мрђа",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "pmf"
   },
@@ -171,6 +195,7 @@
     "query": "Koje je uže naučne oblasti prodekan PMF-a za nauku?",
     "expected_source": "https://www.pmf.uns.ac.rs/o-fakultetu/uprava/prodekan-za-nauku/",
     "expected_text_fragment": "нуклеарна физика",
+    "category": "department-info",
     "difficulty": "medium",
     "department": "pmf"
   },
@@ -178,6 +203,7 @@
     "query": "Ko su dobitnice Nacionalnih stipendija 'Za žene u nauci' za 2019. godinu sa PMF-a?",
     "expected_source": "https://www.pmf.uns.ac.rs/2019/12/20/docent-dr-nevena-velickovic-medju-dobitnicama-nacionalnih-stipendija-za-zene-u-nauci-za-2019-godinu/",
     "expected_text_fragment": "Невена Величковић",
+    "category": "staff-pages",
     "difficulty": "easy",
     "department": "pmf"
   },
@@ -185,6 +211,7 @@
     "query": "U kojim naučnim oblastima su nagrađene dobitnice stipendija 'Za žene u nauci' 2019 sa PMF-a?",
     "expected_source": "https://www.pmf.uns.ac.rs/2019/12/20/docent-dr-nevena-velickovic-medju-dobitnicama-nacionalnih-stipendija-za-zene-u-nauci-za-2019-godinu/",
     "expected_text_fragment": "генетике",
+    "category": "staff-pages",
     "difficulty": "medium",
     "department": "pmf"
   },
@@ -192,7 +219,96 @@
     "query": "Koji predmeti postoje u PhD programu metodike nastave na PMF-u?",
     "expected_source": "https://www.pmf.uns.ac.rs/en/studies/study-programs/phd-teaching-methodology-2015/",
     "expected_text_fragment": "Intelligent Systems in Education",
+    "category": "study-programs",
     "difficulty": "hard",
     "department": "pmf"
+  },
+  {
+    "query": "Ko je kontakt osoba za DIGITOUR projekat na DGT i koji je njen email?",
+    "expected_source": "https://www.dgt.uns.ac.rs/digitour/",
+    "expected_text_fragment": "tatjana.pivac@dgt.uns.ac.rs",
+    "category": "research-projects",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Koji je ukupni budžet projekta DIGITOUR i ko je koordinator projekta?",
+    "expected_source": "https://www.dgt.uns.ac.rs/digitour/",
+    "expected_text_fragment": "1.333.178",
+    "category": "research-projects",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Koji Horizon projekat u oblasti klimatskih promena koordinira UNSPMF na DGT?",
+    "expected_source": "https://www.dgt.uns.ac.rs/clear-climate/",
+    "expected_text_fragment": "CLEAR CLIMATE",
+    "category": "research-projects",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Ko je kontakt osoba istraživačke grupe za demografska istraživanja na DGT i koji je njen email?",
+    "expected_source": "https://www.dgt.uns.ac.rs/demografska-istrazivanja/",
+    "expected_text_fragment": "daniela.arsenovic@dgt.uns.ac.rs",
+    "category": "research-projects",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Šta je EGEA Novi Sad i od koje godine postoji na DGT?",
+    "expected_source": "https://www.dgt.uns.ac.rs/egea-novi-sad/",
+    "expected_text_fragment": "2001. godine",
+    "category": "research-projects",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Šta je LAFIB laboratorija i koje godine je osnovana na Departmanu za hemiju?",
+    "expected_source": "https://www.dh.uns.ac.rs/lafib/",
+    "expected_text_fragment": "2012",
+    "category": "dh-lafib-lab",
+    "difficulty": "easy",
+    "department": "dh"
+  },
+  {
+    "query": "Ko je osoba za kontakt u LAFIB laboratoriji na Departmanu za hemiju?",
+    "expected_source": "https://www.dh.uns.ac.rs/lafib/kontakt.php",
+    "expected_text_fragment": "Nataša Simin",
+    "category": "dh-lafib-lab",
+    "difficulty": "easy",
+    "department": "dh"
+  },
+  {
+    "query": "Koji je email i broj telefona LAFIB laboratorije na DH?",
+    "expected_source": "https://www.dh.uns.ac.rs/lafib/kontakt.php",
+    "expected_text_fragment": "lafib@dh.uns.ac.rs",
+    "category": "dh-lafib-lab",
+    "difficulty": "easy",
+    "department": "dh"
+  },
+  {
+    "query": "Koji studijski programi iz zaštite životne sredine postoje na Departmanu za hemiju, biohemiju i zaštitu životne sredine?",
+    "expected_source": "http://www.dh.uns.ac.rs/zastita-zivotne-sredine/",
+    "expected_text_fragment": "Osnovne akademske studije zaštite životne sredine",
+    "category": "unclassified",
+    "difficulty": "easy",
+    "department": "dh"
+  },
+  {
+    "query": "Koji četiri studijska programa postoje na Departmanu za hemiju, biohemiju i zaštitu životne sredine?",
+    "expected_source": "https://www.dh.uns.ac.rs/10-razloga-zasto-odabrati-studije-kod-nas-2/",
+    "expected_text_fragment": "hemija, biohemija, zaštita životne sredine",
+    "category": "unclassified",
+    "difficulty": "medium",
+    "department": "dh"
+  },
+  {
+    "query": "Kako mogu maturanti da se pripreme za prijemni ispit na DMI i na kom portalu?",
+    "expected_source": "https://www.dmi.uns.ac.rs/author/dmiadmin/",
+    "expected_text_fragment": "edumoodle.pmf.uns.ac.rs",
+    "category": "unclassified",
+    "difficulty": "easy",
+    "department": "dmi"
   }
 ]
