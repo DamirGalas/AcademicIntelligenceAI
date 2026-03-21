@@ -38,6 +38,10 @@ class Searcher:
 
         self.max_context_chunks = query_cfg.get("max_context_chunks", 5)
         self.confidence_threshold = query_cfg.get("confidence_threshold", 0.5)
+        self.retrieval_multiplier = query_cfg.get("retrieval_multiplier", 3)
+        self.high_relevance_boost = query_cfg.get("high_relevance_boost", 1.2)
+        self.relevance_filter = True  # can be disabled for eval baselines
+        self.exclude_pdfs = query_cfg.get("exclude_pdfs", True)
 
         logger.info("Loading embedding model: %s", model_name)
         self.model = SentenceTransformer(model_name)
@@ -62,12 +66,19 @@ class Searcher:
         if top_k is None:
             top_k = self.max_context_chunks
 
+        # Fetch more candidates to account for post-filter removals.
+        # When PDFs are excluded (~89% of index), multiply aggressively to
+        # ensure enough HTML candidates survive the filter.
+        fetch_k = top_k * self.retrieval_multiplier
+        if self.exclude_pdfs:
+            fetch_k = max(fetch_k * 10, 300)
+
         # Encode and normalize query vector (index uses cosine via normalized IP)
         query_vector = self.model.encode(query).astype("float32")
         query_vector = np.expand_dims(query_vector, axis=0)
         faiss.normalize_L2(query_vector)
 
-        distances, indices = self.index.search(query_vector, top_k)
+        distances, indices = self.index.search(query_vector, fetch_k)
 
         results = []
         for score, idx in zip(distances[0], indices[0]):
@@ -79,7 +90,23 @@ class Searcher:
                 continue
 
             meta = self.metadata[idx]
+
+            if self.exclude_pdfs and meta.get("file_type") == "pdf":
+                continue
+
             chunk_id = meta["chunk_id"]
+            doc_id = meta["doc_id"]
+
+            # Look up relevance label — skip none, boost high
+            doc_row = self.conn.execute(
+                "SELECT relevance FROM documents WHERE id = ?", (doc_id,)
+            ).fetchone()
+            relevance = doc_row[0] if doc_row else "none"
+
+            if self.relevance_filter and relevance == "none":
+                continue
+
+            boosted_score = score * self.high_relevance_boost if relevance == "high" else score
 
             row = self.conn.execute(
                 "SELECT text FROM chunks WHERE id = ?", (chunk_id,)
@@ -90,16 +117,21 @@ class Searcher:
                 continue
 
             results.append({
-                "score": round(float(score), 4),
+                "score": round(float(boosted_score), 4),
                 "source": meta["source"],
-                "purpose": meta.get("purpose", "unknown"),
-                "chunk_index": meta["chunk_index"],
+                "url": meta.get("url", ""),
+                "relevance": relevance,
+                "chunk_index": meta.get("chunk_index", -1),
                 "text": row[0],
             })
 
+        # Re-sort after boosting and trim to requested top_k
+        results.sort(key=lambda x: x["score"], reverse=True)
+        results = results[:top_k]
+
         logger.info(
-            "Query: '%s' -> %d results (top_k=%d, threshold=%.2f)",
-            query[:80], len(results), top_k, self.confidence_threshold,
+            "Query: '%s' -> %d results (fetch_k=%d, top_k=%d, threshold=%.2f)",
+            query[:80], len(results), fetch_k, top_k, self.confidence_threshold,
         )
         return results
 

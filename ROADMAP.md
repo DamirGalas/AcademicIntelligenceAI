@@ -1,10 +1,10 @@
 # Academic Intelligence AI — Production Roadmap
-
+> Goal: Build a production-ready RAG system for academic information retrieval,
 > Goal: Build a production-ready RAG system for academic information retrieval,
 > covering all key competencies expected from an AI Engineer in practice.
-
+## Execution Phases — Overview
 ---
-
+  Core pipeline + observability + retrieval + RAG + spec — built on 6 test pages
 ## Execution Phases — Overview
 
 ```
@@ -40,8 +40,8 @@ PHASE 6: Production (CP21-27)
 - CP19/CP20 are conditional — only do them if eval shows specific weaknesses
 - Incremental pipeline moves to production phase — first full run doesn't need it
 
----
 
+## Checkpoint 1: Core Data Pipeline (ETL)
 # Phase 0: Foundation
 
 *Built on 6 hand-picked test pages. Validates the core approach before scaling.*
@@ -270,26 +270,32 @@ pipeline at scale.
 
 ## Checkpoint 10: Embed, Index & Scale Verification
 
-**Status: TODO**
+**Status: IN PROGRESS**
 
 CP9 produces filtered, chunked text. This step embeds it, builds the FAISS index,
 and verifies everything works at scale.
 
-- [ ] **Progressive scaling — do NOT run on full dataset immediately:**
+- [x] **Refactored load pipeline into clean modules:**
+  - `load/store.py` — DB service (CRUD for documents/chunks via `get_connection()`)
+  - `load/embeddings.py` — embedding generation + FAISS index (engine-isolated)
+  - `load/run.py` — orchestrator with configurable `limit` and full PipelineTracker metrics
+  - Migration `004_create_documents_and_chunks.sql` — documents + chunks tables with `text_hash`, `file_type`, `chunk_size`, `chunk_overlap`
+- [x] **Progressive scaling — do NOT run on full dataset immediately:**
   1. Run on ~100 diverse pages (mix of HTML + PDF, all 6 departments) → verify output
   2. Run on ~1,000 pages → check timing, memory, index size
   3. Run on full filtered dataset → final index
-- [ ] **Embedding generation:**
+- [x] **Embedding generation:**
   - Run sentence-transformers on all chunks from CP9
   - Verify embedding dimensions and normalization match existing FAISS setup
-- [ ] **FAISS index build:**
+- [x] **FAISS index build:**
   - Build index from full chunk set
-  - Verify search works (sanity queries)
-- [ ] **Scaling checks at each step:**
+- [x] **Sanity search** — verify search returns relevant results on full index
+- [x] **Scaling checks at each step:**
   - Pipeline runtime (does it finish in reasonable time?)
   - Memory usage (does FAISS index fit in RAM?)
   - Index size on disk
   - Chunk count and avg chunk size (sanity check — no explosion of tiny/empty chunks)
+  - Standard deviation of chunk lengths tracked (`std_chunk_length` metric)
 
 ---
 
@@ -297,27 +303,25 @@ and verifies everything works at scale.
 
 **Status: TODO**
 
-The most important step in Phase 1. CP4 gave P@1=95% on 6 pages. That number is
-meaningless at 20,000 pages — more data means more noise, more competing chunks,
-more chances for retrieval to return the wrong thing.
+First real evaluation. CP4 eval (P@1=95%, 6 pages) is obsolete — those sources no
+longer exist in the dataset. The full CP10 index (15,000+ docs, 1M+ chunks) is the
+first real test. This checkpoint establishes the **baseline** for all future work.
 
-- [ ] Re-run retrieval eval (benchmark.json) on the full index
-- [ ] Compare metrics with CP4 baseline:
-  - P@1: 95% → ? (expect a drop — the question is how much)
-  - MRR: 0.95 → ?
-  - FragmentHit@5: 75% → ?
-- [ ] Identify failure cases — which queries degraded and why:
+- [ ] **Write new benchmark** (50-100 questions):
+  - Cover all 6 departments (dbe, df, dgt, dh, dmi, pmf_uns)
+  - Cover both file types (html, pdf)
+  - Cover diverse categories (upis, programi, vesti, kadar, nauka, dokumenta)
+  - Replace old benchmark.json (20 questions targeting deleted legacy sources)
+- [ ] **Run retrieval eval** on the full index — this becomes the baseline:
+  - P@1, MRR, FragmentHit@5
+  - Record results via PipelineTracker for future comparison
+- [ ] **Identify failure cases** — which queries fail and why:
   - Is the right chunk in the index but ranked lower? (retrieval problem)
   - Is the right chunk not in the index at all? (filtering/chunking problem)
   - Is there a competing chunk from a similar page? (deduplication problem)
-- [ ] Expand benchmark with new questions that cover the scaled dataset
 - [ ] **Decision point:** based on eval results, decide priority for Phase 2 and 5:
-  - If retrieval degrades badly → prioritize CP19 (better retrieval) or CP20 (better chunking)
-  - If retrieval holds → prioritize CP12/CP13 (prompt engineering, tool calling)
-
-> **AI Note:** The 6-page eval was a prototype. The full-dataset eval is the real test.
-> More data means more noise and more edge cases. Measure after indexing — do not
-> assume quality improved just because more data exists.
+  - If retrieval is poor → prioritize CP19 (better retrieval) or CP20 (better chunking)
+  - If retrieval is acceptable → prioritize CP12/CP13 (prompt engineering, tool calling)
 
 ---
 

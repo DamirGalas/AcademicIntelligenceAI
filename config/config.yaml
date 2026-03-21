@@ -73,9 +73,10 @@ chunking:
   chunk_overlap: 80
   min_chunk_size: 50
 
+
 # --- Load ---
 load:
-  limit: 5  # 0 = all files, >0 = first N chunked files (for progressive scaling)
+  limit: 0  # 0 = all files, >0 = first N chunked files (for progressive scaling)
 
 # --- Embedding ---
 embedding:
@@ -93,6 +94,8 @@ vector_db:
 query:
   max_context_chunks: 5
   confidence_threshold: 0.5
+  retrieval_multiplier: 3    # fetch top_k * N from FAISS before post-filtering
+  high_relevance_boost: 1.2  # score multiplier for high-relevance documents
 
 # --- LLM ---
 llm:

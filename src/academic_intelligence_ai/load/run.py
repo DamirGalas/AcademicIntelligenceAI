@@ -134,14 +134,18 @@ def run():
         index_size = embeddings.save_index(index, metadata, index_path)
 
         # Record metrics
-        avg_chunk_length = (
-            sum(len(t) for t in all_texts) / len(all_texts) if all_texts else 0
+        chunk_lengths = [len(t) for t in all_texts]
+        avg_chunk_length = sum(chunk_lengths) / len(chunk_lengths) if chunk_lengths else 0
+        std_chunk_length = (
+            (sum((l - avg_chunk_length) ** 2 for l in chunk_lengths) / len(chunk_lengths)) ** 0.5
+            if chunk_lengths else 0
         )
         tracker.add_metric("total_docs", doc_count)
         tracker.add_metric("total_chunks", len(all_texts))
         tracker.add_metric("chunk_size", chunk_size)
         tracker.add_metric("chunk_overlap", chunk_overlap)
         tracker.add_metric("avg_chunk_length", round(avg_chunk_length, 1))
+        tracker.add_metric("std_chunk_length", round(std_chunk_length, 1))
         tracker.add_metric("index_size_bytes", index_size)
 
         logger.info(

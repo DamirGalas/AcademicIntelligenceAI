@@ -1,102 +1,198 @@
 [
   {
-    "query": "Koliko godina traju osnovne studije matematike?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "Matematika (3 godine, 180 ESPB)"
+    "query": "Ko su profesori u penziji na Departmanu za matematiku i informatiku?",
+    "expected_source": "https://www.dmi.uns.ac.rs/o-departmanu/koleginice-i-kolege-u-penziji/",
+    "expected_text_fragment": "Đura Paunić",
+    "difficulty": "easy",
+    "department": "dmi"
   },
   {
-    "query": "Koliko traju master studije matematike?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "Matematika (2 godine, 120 ESPB)"
+    "query": "Koje katedre postoje na Odseku za informatiku DMI?",
+    "expected_source": "https://www.dmi.uns.ac.rs/imenik/",
+    "expected_text_fragment": "Informacione tehnologije i sistemi",
+    "difficulty": "easy",
+    "department": "dmi"
   },
   {
-    "query": "Koliko traje program diplomiranog matematičara?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "4 godine, 240 ESPB"
+    "query": "Ko je profesor sa Griffith University koji je gostovao na DMI u 2024. godini?",
+    "expected_source": "https://www.dmi.uns.ac.rs/2024/06/predavanje-profesora-bele-stantica-sa-grifit-univerziteta-australija/",
+    "expected_text_fragment": "veštačke inteligencije",
+    "difficulty": "medium",
+    "department": "dmi"
   },
   {
-    "query": "Ko je rukovodilac studijskog programa matematike?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "Rozalija Madaras"
+    "query": "Koji master rad je prihvaćen na sednici Veća DMI u decembru 2023?",
+    "expected_source": "https://www.dmi.uns.ac.rs/2023/12/vece-20-12-2023/",
+    "expected_text_fragment": "Dragana Lujić",
+    "difficulty": "medium",
+    "department": "dmi"
   },
   {
-    "query": "Koji moduli postoje na primenjenoj matematici?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "Analitika podataka i statistika"
+    "query": "U kojoj sali se polaže prijemni ispit za matematičke i informatičke smerove na DMI?",
+    "expected_source": "https://www.dmi.uns.ac.rs/category/obavestenja/upis/",
+    "expected_text_fragment": "sali 64",
+    "difficulty": "easy",
+    "department": "dmi"
   },
   {
-    "query": "Koliko traje program Master profesor matematike?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "5 godina, 300"
+    "query": "Koji studijski programi postoje na Departmanu za fiziku?",
+    "expected_source": "https://www.df.uns.ac.rs/o-nama/",
+    "expected_text_fragment": "Nastava fizike",
+    "difficulty": "easy",
+    "department": "df"
   },
   {
-    "query": "Postoji li master iz Data Science na PMF-u?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "Data Science"
+    "query": "Koji je broj telefona Departmana za fiziku?",
+    "expected_source": "https://www.df.uns.ac.rs/o-nama/",
+    "expected_text_fragment": "021/485-2800",
+    "difficulty": "easy",
+    "department": "df"
   },
   {
-    "query": "Ko je rukovodilac doktorskih studija matematike?",
-    "expected_source": "dmi_programs",
-    "expected_text_fragment": "Marko Nedeljkov"
+    "query": "Šta je 1st BSc and MSc Nuclear Competition and Summer School 2024?",
+    "expected_source": "https://www.df.uns.ac.rs/2024/04/1st-bsc-and-msc-nuclear-competition-and-summer-school-2024/",
+    "expected_text_fragment": "Nuclear Competition",
+    "difficulty": "medium",
+    "department": "df"
   },
   {
-    "query": "Koliko pitanja ima na prijemnom ispitu iz fizike?",
-    "expected_source": "df_prijemni",
-    "expected_text_fragment": "30 pitanja"
+    "query": "Da li Departman za fiziku ima doktorske akademske studije fizike?",
+    "expected_source": "https://www.df.uns.ac.rs/o-nama/",
+    "expected_text_fragment": "Doktorske akademske studije Fizika",
+    "difficulty": "easy",
+    "department": "df"
   },
   {
-    "query": "Koliko bodova je potrebno da se položi prijemni iz fizike?",
-    "expected_source": "df_prijemni",
-    "expected_text_fragment": "najmanje 14 bodova"
+    "query": "Ko je autor udžbenika sa Katedre za opštu fiziku i metodiku nastave fizike?",
+    "expected_source": "https://www.df.uns.ac.rs/o-nama/katedre/katedra-za-opstu-fiziku-i-metodiku-nastave-fizike/",
+    "expected_text_fragment": "Dušanka Obadović",
+    "difficulty": "hard",
+    "department": "df"
   },
   {
-    "query": "Šta je dozvoljeno koristiti na prijemnom ispitu iz fizike?",
-    "expected_source": "df_prijemni",
-    "expected_text_fragment": "lenjir i kalkulator"
+    "query": "Koji su moduli master studija biologije na Departmanu za biologiju i ekologiju?",
+    "expected_source": "http://wwwold.dbe.pmf.uns.ac.rs/o_departmanu",
+    "expected_text_fragment": "Botanika, Zoologija",
+    "difficulty": "easy",
+    "department": "dbe"
   },
   {
-    "query": "Ko je oslobođen polaganja prijemnog ispita?",
-    "expected_source": "df_prijemni",
-    "expected_text_fragment": "republičkom takmičenju"
+    "query": "Koja laboratorija na DBE se bavi paleoekološkom rekonstrukcijom?",
+    "expected_source": "http://wwwold.dbe.pmf.uns.ac.rs/o_departmanu/laboratorije/laboratorija_za_paleoekolosku_rekonstrukciju_(laper)/videoteka",
+    "expected_text_fragment": "paleoekološku rekonstrukciju (LAPER)",
+    "difficulty": "medium",
+    "department": "dbe"
   },
   {
-    "query": "Gde se nalazi Departman za fiziku?",
-    "expected_source": "df_main",
-    "expected_text_fragment": "Trg Dositeja Obradovića 4"
+    "query": "Koji je email profesora Radmile Kovačević sa DBE?",
+    "expected_source": "http://wwwold.dbe.pmf.uns.ac.rs/o_departmanu/imenik/radmila_kovacevic",
+    "expected_text_fragment": "radmila.kovacevic@dbe.uns.ac.rs",
+    "difficulty": "easy",
+    "department": "dbe"
   },
   {
-    "query": "Ko je dobio Nobelovu nagradu za fiziku 2025?",
-    "expected_source": "df_main",
-    "expected_text_fragment": "Nobelova nagrada za fiziku za 2025"
+    "query": "Koji je email kontakt Departmana za hemiju, biohemiju i zaštitu životne sredine?",
+    "expected_source": "https://www.dh.uns.ac.rs/pripremna-nastava-iz-hemije/",
+    "expected_text_fragment": "infohemija@dh.uns.ac.rs",
+    "difficulty": "easy",
+    "department": "dh"
   },
   {
-    "query": "Koji je novi tekući račun PMF-a?",
-    "expected_source": "df_main",
-    "expected_text_fragment": "840-32804845-47"
+    "query": "Koji kandidati moraju da polažu prijemni ispit iz hemije za upis na DH?",
+    "expected_source": "https://www.dh.uns.ac.rs/pripremna-nastava-iz-hemije/",
+    "expected_text_fragment": "Biohemije",
+    "difficulty": "easy",
+    "department": "dh"
   },
   {
-    "query": "Šta je akcija Budi student jedan dan?",
-    "expected_source": "dmi_informatika_news",
-    "expected_text_fragment": "Budi student jedan dan"
+    "query": "Na kojoj katedri radi docent dr Nina Finčur i koji je njen email?",
+    "expected_source": "https://www.dh.uns.ac.rs/dr-nina-fincur-docent/",
+    "expected_text_fragment": "Katedra za analitičku hemiju",
+    "difficulty": "easy",
+    "department": "dh"
   },
   {
-    "query": "Gde su studenti informatike bili na zimskoj školi?",
-    "expected_source": "dmi_informatika_news",
-    "expected_text_fragment": "Lisabonu"
+    "query": "Na kojoj adresi se nalazi Departman za hemiju PMF-a?",
+    "expected_source": "https://www.dh.uns.ac.rs/dr-nina-fincur-docent/",
+    "expected_text_fragment": "Trg Dositeja Obradovića 3",
+    "difficulty": "easy",
+    "department": "dh"
   },
   {
-    "query": "Koji tim je učestvovao na Serbian Cybersecurity Challenge?",
-    "expected_source": "dmi_informatika_news",
-    "expected_text_fragment": "Petar Pilipović"
+    "query": "Da li Departman za hemiju organizuje pripremnu nastavu za prijemni ispit?",
+    "expected_source": "https://www.dh.uns.ac.rs/pripremna-nastava-iz-hemije/",
+    "expected_text_fragment": "pripremnu nastavu za polaganje prijemnog ispita",
+    "difficulty": "easy",
+    "department": "dh"
   },
   {
-    "query": "Koji je email za upis na informatiku?",
-    "expected_source": "dmi_informatika_news",
-    "expected_text_fragment": "upis@dmi.rs"
+    "query": "Šta su studenti DGT radili kao praktični deo ispita iz predmeta Animacija u turizmu?",
+    "expected_source": "https://www.dgt.uns.ac.rs/brazilsko-vece",
+    "expected_text_fragment": "Noć Brazilske senzacije",
+    "difficulty": "medium",
+    "department": "dgt"
   },
   {
-    "query": "Kada je dodatni januarski ispitni rok?",
-    "expected_source": "dmi_informatika_news",
-    "expected_text_fragment": "26. do 30. januara 2026"
+    "query": "Ko je kontakt osoba i koji je email istraživačke grupe za animaciju u turizmu na DGT?",
+    "expected_source": "https://www.dgt.uns.ac.rs/animacija-u-turizmu/",
+    "expected_text_fragment": "ivkova@gmail.com",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Koji je broj telefona dr Anđelije Ivkov Džigurski na DGT?",
+    "expected_source": "https://www.dgt.uns.ac.rs/animacija-u-turizmu/",
+    "expected_text_fragment": "+381 21 485 2834",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Koji je email dr Natalije Nikolić sa Katedre za regionalnu geografiju DGT?",
+    "expected_source": "http://www.dgt.uns.ac.rs/katedra-za-regionalnu-geografiju/natalija-nikolic/",
+    "expected_text_fragment": "natalija.nikolic@dgt.uns.ac.rs",
+    "difficulty": "easy",
+    "department": "dgt"
+  },
+  {
+    "query": "Čime se bavi radna grupa za animaciju u turizmu i etnoturizam na DGT?",
+    "expected_source": "https://www.dgt.uns.ac.rs/animacija-u-turizmu/",
+    "expected_text_fragment": "folklornog nasleđa",
+    "difficulty": "medium",
+    "department": "dgt"
+  },
+  {
+    "query": "Ko je prodekan za nauku na PMF-u i koja mu je naučna oblast?",
+    "expected_source": "https://www.pmf.uns.ac.rs/o-fakultetu/uprava/prodekan-za-nauku/",
+    "expected_text_fragment": "Душан Мрђа",
+    "difficulty": "easy",
+    "department": "pmf"
+  },
+  {
+    "query": "Koje je uže naučne oblasti prodekan PMF-a za nauku?",
+    "expected_source": "https://www.pmf.uns.ac.rs/o-fakultetu/uprava/prodekan-za-nauku/",
+    "expected_text_fragment": "нуклеарна физика",
+    "difficulty": "medium",
+    "department": "pmf"
+  },
+  {
+    "query": "Ko su dobitnice Nacionalnih stipendija 'Za žene u nauci' za 2019. godinu sa PMF-a?",
+    "expected_source": "https://www.pmf.uns.ac.rs/2019/12/20/docent-dr-nevena-velickovic-medju-dobitnicama-nacionalnih-stipendija-za-zene-u-nauci-za-2019-godinu/",
+    "expected_text_fragment": "Невена Величковић",
+    "difficulty": "easy",
+    "department": "pmf"
+  },
+  {
+    "query": "U kojim naučnim oblastima su nagrađene dobitnice stipendija 'Za žene u nauci' 2019 sa PMF-a?",
+    "expected_source": "https://www.pmf.uns.ac.rs/2019/12/20/docent-dr-nevena-velickovic-medju-dobitnicama-nacionalnih-stipendija-za-zene-u-nauci-za-2019-godinu/",
+    "expected_text_fragment": "генетике",
+    "difficulty": "medium",
+    "department": "pmf"
+  },
+  {
+    "query": "Koji predmeti postoje u PhD programu metodike nastave na PMF-u?",
+    "expected_source": "https://www.pmf.uns.ac.rs/en/studies/study-programs/phd-teaching-methodology-2015/",
+    "expected_text_fragment": "Intelligent Systems in Education",
+    "difficulty": "hard",
+    "department": "pmf"
   }
 ]
