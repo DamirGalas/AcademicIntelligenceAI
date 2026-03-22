@@ -97,17 +97,11 @@ query:
   retrieval_multiplier: 3    # fetch top_k * N from FAISS before post-filtering
   high_relevance_boost: 1.2  # score multiplier for high-relevance documents
   exclude_pdfs: true
-  allowed_categories:  # only these categories pass the filter (null = allow all)
-    - department-info
-    - news-announcements
-    - staff-pages
-    - study-programs
+  allowed_categories: null  # null = allow all HTML categories (PDFs excluded separately)
 
 # --- LLM ---
 llm:
-  provider: "ollama"
-  model: "mistral"
-  base_url: "http://localhost:11434"
+  model: "gpt-4o-mini"
   max_tokens: 512
   temperature: 0.2
 

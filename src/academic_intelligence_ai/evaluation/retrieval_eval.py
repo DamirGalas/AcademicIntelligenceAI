@@ -1,5 +1,9 @@
 import json
+import sys
 from pathlib import Path
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from academic_intelligence_ai.db.connection import get_connection
 from academic_intelligence_ai.monitoring.logger import get_logger
@@ -15,6 +19,7 @@ def evaluate(
     top_k: int = 5,
     confidence_threshold: float | None = None,
     relevance_filter: bool = True,
+    use_agent: bool = False,
     note: str = "",
 ):
     """Run retrieval evaluation against a test set.
@@ -41,6 +46,11 @@ def evaluate(
     if not relevance_filter:
         searcher.relevance_filter = False
 
+    agent = None
+    if use_agent:
+        from academic_intelligence_ai.query.agent import Agent
+        agent = Agent()
+
     test_data = json.loads(test_file.read_text(encoding="utf-8"))
     total = len(test_data)
 
@@ -64,7 +74,11 @@ def evaluate(
         expected_source = item["expected_source"]
         expected_fragment = item.get("expected_text_fragment", "")
 
-        results = searcher.search(query, top_k=fetch_k, category_filter=item.get("category"))
+        if agent:
+            effective_query = agent.rewrite_query(query)
+        else:
+            effective_query = query
+        results = searcher.search(effective_query, top_k=fetch_k)
         urls = [r["url"] for r in results]
         top_score = results[0]["score"] if results else 0.0
 
@@ -102,6 +116,8 @@ def evaluate(
         p1_mark = "Y" if p1 else "-"
         frag_mark = "Y" if frag_hit else "MISS"
         print(f"{i+1:>3}  {p1_mark:>4}  {frag_mark:>4}  {top_score:>6.3f}  {query}")
+        if use_agent and effective_query != query:
+            print(f"     >> rewrite: {effective_query}")
 
         # Failure detail: show returned URLs vs expected
         if not p1 or not frag_hit:
@@ -128,6 +144,7 @@ def evaluate(
     print(f"  Benchmark:           {test_file.name}")
     print(f"  Confidence thresh:   {active_threshold}")
     print(f"  Relevance filter:    {'on' if active_relevance else 'off'}")
+    print(f"  Agent rewrite:       {'on' if use_agent else 'off'}")
     if note:
         print(f"  Note:                {note}")
     print(f"  Queries:             {total}")
@@ -150,15 +167,16 @@ def evaluate(
     conn = get_connection()
     conn.execute(
         """INSERT INTO eval_runs
-           (benchmark_file, top_k, confidence_threshold, relevance_filter,
+           (benchmark_file, top_k, confidence_threshold, relevance_filter, use_agent,
             total_queries, precision_at_1, precision_at_3, precision_at_9,
             precision_at_30, fragment_hit, mrr, avg_hit_score, avg_miss_score, note)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             test_file.name,
             top_k,
             active_threshold,
             1 if active_relevance else 0,
+            1 if use_agent else 0,
             total,
             round(precision_1, 4),
             round(precision_3, 4),
@@ -184,7 +202,8 @@ if __name__ == "__main__":
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--threshold", type=float, default=0.0)
     parser.add_argument("--relevance-filter", action="store_true", default=True)
-    parser.add_argument("--note", default="no-pdf + relevance filter + per-query category filter + dedup")
+    parser.add_argument("--agent", action="store_true", default=False)
+    parser.add_argument("--note", default="")
     args = parser.parse_args()
 
     test_file = PROJECT_ROOT / "data" / "evaluation" / args.benchmark
@@ -193,5 +212,6 @@ if __name__ == "__main__":
         top_k=args.top_k,
         confidence_threshold=args.threshold,
         relevance_filter=args.relevance_filter,
+        use_agent=args.agent,
         note=args.note,
     )

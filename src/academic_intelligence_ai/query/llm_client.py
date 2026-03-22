@@ -1,7 +1,9 @@
-import requests
+import os
 from pathlib import Path
 
 import yaml
+from dotenv import load_dotenv
+from openai import OpenAI
 
 from academic_intelligence_ai.monitoring.logger import get_logger
 
@@ -9,63 +11,88 @@ logger = get_logger("query.llm_client")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
+load_dotenv(PROJECT_ROOT / ".env")
 
-def load_config() -> dict:
-    """Load configuration from config/config.yaml."""
+
+def _load_config() -> dict:
     config_path = PROJECT_ROOT / "config" / "config.yaml"
     with open(config_path) as f:
         return yaml.safe_load(f)
 
 
 class LLMClient:
-    """Client for communicating with a local Ollama LLM instance."""
+    """OpenAI API client. Stateless — passes messages through, does not interpret content."""
 
     def __init__(self):
-        config = load_config()
+        config = _load_config()
         llm_cfg = config.get("llm", {})
 
-        self.model = llm_cfg.get("model", "mistral")
-        self.base_url = llm_cfg.get("base_url", "http://localhost:11434")
+        self.model = llm_cfg.get("model", "gpt-4o-mini")
         self.max_tokens = llm_cfg.get("max_tokens", 512)
         self.temperature = llm_cfg.get("temperature", 0.2)
 
-        logger.info("LLM client initialized: model=%s, url=%s", self.model, self.base_url)
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY not set in environment or .env file")
 
-    def generate(self, prompt: str) -> dict:
-        """Send a prompt to Ollama and return response with metrics.
+        self.client = OpenAI(api_key=api_key)
+        logger.info("LLM client initialized: model=%s", self.model)
 
-        Returns a dict with keys: answer, prompt_tokens, response_tokens, latency_ms.
+    def generate(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
+        """Send messages to OpenAI and return response with metrics.
+
+        Returns a dict with keys:
+          - type: "text" | "tool_call"
+          - answer: str (if type == "text")
+          - tool_name: str, tool_arguments: dict (if type == "tool_call")
+          - prompt_tokens, response_tokens, latency_ms
         """
-        url = f"{self.base_url}/api/generate"
-        payload = {
+        import time
+
+        kwargs = {
             "model": self.model,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "num_predict": self.max_tokens,
-                "temperature": self.temperature,
-            },
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
         }
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
 
-        logger.debug("Sending prompt to LLM (%d chars)", len(prompt))
+        start = time.perf_counter()
+        response = self.client.chat.completions.create(**kwargs)
+        latency_ms = round((time.perf_counter() - start) * 1000)
 
-        response = requests.post(url, json=payload, timeout=120)
-        response.raise_for_status()
+        message = response.choices[0].message
+        usage = response.usage
 
-        result = response.json()
-        answer = result.get("response", "").strip()
+        prompt_tokens = usage.prompt_tokens if usage else 0
+        response_tokens = usage.completion_tokens if usage else 0
 
-        prompt_tokens = result.get("prompt_eval_count", 0)
-        response_tokens = result.get("eval_count", 0)
-        total_ns = result.get("total_duration", 0)
-        latency_ms = round(total_ns / 1e6)
+        if message.tool_calls:
+            tool_call = message.tool_calls[0]
+            import json
+            logger.info(
+                "LLM tool call: %s, tokens=%d+%d, latency=%dms",
+                tool_call.function.name, prompt_tokens, response_tokens, latency_ms,
+            )
+            return {
+                "type": "tool_call",
+                "tool_name": tool_call.function.name,
+                "tool_arguments": json.loads(tool_call.function.arguments),
+                "tool_call_id": tool_call.id,
+                "prompt_tokens": prompt_tokens,
+                "response_tokens": response_tokens,
+                "latency_ms": latency_ms,
+            }
 
+        answer = message.content.strip() if message.content else ""
         logger.info(
             "LLM response: %d chars, tokens=%d+%d, latency=%dms",
             len(answer), prompt_tokens, response_tokens, latency_ms,
         )
-
         return {
+            "type": "text",
             "answer": answer,
             "prompt_tokens": prompt_tokens,
             "response_tokens": response_tokens,

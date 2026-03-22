@@ -407,10 +407,11 @@ The prompt is basic. This is the **highest-ROI improvement** you can make right
 now — small prompt changes have outsized impact on answer quality, and the effort
 is minimal compared to changing chunking or retrieval architecture.
 
-- [ ] Switch LLM from Ollama/Mistral to **GPT-4o-mini** (OpenAI API):
-  - Update `config/config.yaml`: `provider: openai`, `model: gpt-4o-mini`
-  - Add OpenAI client in `query/llm_client.py` alongside existing Ollama client
-  - Store API key in `.env` (never in config or code)
+- [x] Switch LLM from Ollama/Mistral to **GPT-4o-mini** (OpenAI API):
+  - Update `config/config.yaml`: `model: gpt-4o-mini`
+  - Replaced Ollama client with OpenAI SDK client (`query/llm_client.py`) — Ollama removed entirely
+  - API key in `.env`, `python-dotenv` added as dependency
+  - Interface: `generate(messages, tools=None)` — messages format, tool calling ready
 - [ ] **Tool calling** — LLM decides when and how to search:
   - Define a `search_knowledge_base` tool with OpenAI function calling schema
   - LLM receives the user question and decides: answer directly OR call the tool

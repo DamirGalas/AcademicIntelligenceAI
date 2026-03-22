@@ -1,10 +1,11 @@
-  """BFS web crawler that downloads HTML pages, PDF files, and Office documents from configured domains."""
+"""BFS web crawler that downloads HTML pages, PDF files, and Office documents from configured domains."""
 
 import argparse
 import ctypes
 import json
 import platform
 import re
+import sys
 import time
 from collections import deque
 from pathlib import Path
@@ -173,16 +174,35 @@ def _save_metadata(metadata: dict, metadata_path: Path) -> None:
     )
 
 
+def _print_progress(domain_name: str, stats: dict) -> None:
+    """Print a single-line progress bar to stdout, overwriting the previous line."""
+    line = (
+        f"[{domain_name}]  visited: {stats['pages_visited']:>5}  "
+        f"HTML: {stats['html_saved']:>4}  "
+        f"skipped: {stats['skipped']:>4}  "
+        f"errors: {stats['errors']:>3}"
+    )
+    print(f"\r{line}", end="", flush=True)
+
+
 def crawl_domain(
     domain_name: str,
     base_url: str,
     config: dict,
+    fresh: bool = False,
+    html_only: bool = False,
+    dry_run: bool = False,
 ) -> dict:
     """Crawl a single domain using BFS. Returns stats dict.
 
     Downloads HTML pages to data/raw/{domain_name}/html/
     Downloads PDF files to data/raw/{domain_name}/pdf/
     Downloads Office docs to data/raw/{domain_name}/docs/
+
+    Args:
+        fresh: Disable resume mode. Start BFS from scratch and overwrite existing HTML.
+        html_only: Skip PDF and Office document downloads regardless of config.
+        dry_run: Traverse and fetch pages but do not write any files to disk.
     """
     crawler_cfg = config.get("crawler", {})
     delay = crawler_cfg.get("delay_seconds", 0.5)
@@ -194,6 +214,15 @@ def crawl_domain(
     max_pdf_mb = crawler_cfg.get("max_pdf_size_mb", 50)
     respect_robots = crawler_cfg.get("respect_robots_txt", True)
     skip_extensions = crawler_cfg.get("skip_extensions", [])
+
+    # html_only flag overrides config
+    if html_only:
+        download_pdfs = False
+        download_docs = False
+        logger.info("html_only mode: PDF and doc downloads disabled")
+
+    if dry_run:
+        logger.info("dry_run mode: no files will be written")
 
     # Output directories
     domain_dir = PROJECT_ROOT / "data" / "raw" / domain_name
@@ -245,47 +274,50 @@ def crawl_domain(
 
     queue_path = domain_dir / "queue.json"
 
-    # Resume support: load visited from metadata.json and queue from queue.json (both fast)
-    existing_html = list(html_dir.glob("*.html"))
-    existing_pdf = {p.stem for p in pdf_dir.glob("*.pdf")}
-    if existing_html:
-        logger.info("Resume mode: found %d existing HTML, %d existing PDF files",
-                     len(existing_html), len(existing_pdf))
-        if metadata_path.exists():
-            try:
-                with open(metadata_path, encoding="utf-8") as f:
-                    existing_meta = json.load(f)
-                visited.update(existing_meta.keys())
-                metadata.update(existing_meta)
-                stats["resumed"] = len(existing_meta)
-                logger.info("Resume: loaded %d visited URLs from metadata.json", len(visited))
-            except Exception:
-                pass
-        if queue_path.exists():
-            try:
-                with open(queue_path, encoding="utf-8") as f:
-                    saved_queue = json.load(f)
-                queue = deque(u for u in saved_queue if u not in visited)
-                logger.info("Resume: restored %d pending URLs from queue.json", len(queue))
-            except Exception:
-                pass
-        # Clear the initial base_url seed — we'll rebuild queue from saved state or frontier
-        queue.clear()
-        if not queue:
-            # No saved queue: reconstruct frontier from most recently crawled HTML files.
-            # Sort by mtime descending and parse the newest 300 — they were at the BFS edge.
-            frontier_files = sorted(existing_html, key=lambda p: p.stat().st_mtime, reverse=True)[:300]
-            logger.info("Resume: reconstructing frontier from %d recent HTML files", len(frontier_files))
-            for html_file in frontier_files:
+    # Resume support: skipped entirely when --fresh is set
+    if not fresh:
+        existing_html = list(html_dir.glob("*.html"))
+        existing_pdf = {p.stem for p in pdf_dir.glob("*.pdf")}
+        if existing_html:
+            logger.info("Resume mode: found %d existing HTML, %d existing PDF files",
+                         len(existing_html), len(existing_pdf))
+            if metadata_path.exists():
                 try:
-                    content = html_file.read_text(encoding="utf-8")
-                    for link in extract_links(content, base_url):
-                        normalized = normalize_url(link)
-                        if is_same_domain(normalized, base_url) and normalized not in visited:
-                            queue.append(normalized)
+                    with open(metadata_path, encoding="utf-8") as f:
+                        existing_meta = json.load(f)
+                    visited.update(existing_meta.keys())
+                    metadata.update(existing_meta)
+                    stats["resumed"] = len(existing_meta)
+                    logger.info("Resume: loaded %d visited URLs from metadata.json", len(visited))
                 except Exception:
                     pass
-            logger.info("Resume: frontier queue seeded with %d URLs", len(queue))
+            if queue_path.exists():
+                try:
+                    with open(queue_path, encoding="utf-8") as f:
+                        saved_queue = json.load(f)
+                    queue = deque(u for u in saved_queue if u not in visited)
+                    logger.info("Resume: restored %d pending URLs from queue.json", len(queue))
+                except Exception:
+                    pass
+            # Clear the initial base_url seed — we'll rebuild queue from saved state or frontier
+            queue.clear()
+            if not queue:
+                # No saved queue: reconstruct frontier from most recently crawled HTML files.
+                # Sort by mtime descending and parse the newest 300 — they were at the BFS edge.
+                frontier_files = sorted(existing_html, key=lambda p: p.stat().st_mtime, reverse=True)[:300]
+                logger.info("Resume: reconstructing frontier from %d recent HTML files", len(frontier_files))
+                for html_file in frontier_files:
+                    try:
+                        content = html_file.read_text(encoding="utf-8")
+                        for link in extract_links(content, base_url):
+                            normalized = normalize_url(link)
+                            if is_same_domain(normalized, base_url) and normalized not in visited:
+                                queue.append(normalized)
+                    except Exception:
+                        pass
+                logger.info("Resume: frontier queue seeded with %d URLs", len(queue))
+    else:
+        logger.info("Fresh mode: ignoring existing files, starting BFS from scratch")
 
     logger.info("Starting crawl: %s (%s), max_pages=%s, queue_size=%d",
                 domain_name, base_url,
@@ -335,14 +367,16 @@ def crawl_domain(
                     continue
 
                 content = resp.content
-                pdf_path.write_bytes(content)
-                metadata[pdf_path.name] = _build_file_metadata(url, resp, "pdf")
+                if not dry_run:
+                    pdf_path.write_bytes(content)
+                    metadata[pdf_path.name] = _build_file_metadata(url, resp, "pdf")
                 stats["pdf_saved"] += 1
                 logger.info("PDF saved: %s (%d KB)", pdf_path.name, len(content) // 1024)
             except Exception as e:
                 logger.error("Failed to download PDF %s: %s", url, e)
                 stats["errors"] += 1
             stats["pages_visited"] += 1
+            _print_progress(domain_name, stats)
             time.sleep(delay)
             continue
 
@@ -364,21 +398,23 @@ def crawl_domain(
             try:
                 resp = session.get(url, timeout=timeout)
                 resp.raise_for_status()
-                doc_path.write_bytes(resp.content)
-                metadata[doc_path.name] = _build_file_metadata(url, resp, ext.lstrip("."))
+                if not dry_run:
+                    doc_path.write_bytes(resp.content)
+                    metadata[doc_path.name] = _build_file_metadata(url, resp, ext.lstrip("."))
                 stats["docs_saved"] += 1
                 logger.info("Doc saved: %s (%d KB)", doc_path.name, len(resp.content) // 1024)
             except Exception as e:
                 logger.error("Failed to download doc %s: %s", url, e)
                 stats["errors"] += 1
             stats["pages_visited"] += 1
+            _print_progress(domain_name, stats)
             time.sleep(delay)
             continue
 
-        # Skip HTML if already downloaded
+        # Skip HTML if already downloaded — unless fresh mode is active
         slug = slugify_url(url)
         html_path = html_dir / f"{slug}.html"
-        if html_path.exists():
+        if html_path.exists() and not fresh:
             stats["skipped"] += 1
             stats["pages_visited"] += 1
             continue
@@ -394,8 +430,9 @@ def crawl_domain(
                 if "application/pdf" in content_type and download_pdfs:
                     slug = slugify_url(url) + ".pdf"
                     pdf_path = pdf_dir / slug
-                    pdf_path.write_bytes(resp.content)
-                    metadata[pdf_path.name] = _build_file_metadata(url, resp, "pdf")
+                    if not dry_run:
+                        pdf_path.write_bytes(resp.content)
+                        metadata[pdf_path.name] = _build_file_metadata(url, resp, "pdf")
                     stats["pdf_saved"] += 1
                     logger.info("PDF saved (by content-type): %s", pdf_path.name)
                 # Office doc served without proper extension
@@ -406,13 +443,15 @@ def crawl_domain(
                     ext = _guess_doc_extension(content_type)
                     slug = slugify_url(url) + ext
                     doc_path = docs_dir / slug
-                    doc_path.write_bytes(resp.content)
-                    metadata[doc_path.name] = _build_file_metadata(url, resp, ext.lstrip("."))
+                    if not dry_run:
+                        doc_path.write_bytes(resp.content)
+                        metadata[doc_path.name] = _build_file_metadata(url, resp, ext.lstrip("."))
                     stats["docs_saved"] += 1
                     logger.info("Doc saved (by content-type): %s", doc_path.name)
                 else:
                     stats["skipped"] += 1
                 stats["pages_visited"] += 1
+                _print_progress(domain_name, stats)
                 time.sleep(delay)
                 continue
 
@@ -421,12 +460,19 @@ def crawl_domain(
             # Override with content-based detection when header charset is unreliable.
             declared = (resp.encoding or "").upper()
             if declared in ("ISO-8859-1", "LATIN-1", "ASCII", ""):
-                resp.encoding = resp.apparent_encoding
+                detected = resp.apparent_encoding
+                logger.debug(
+                    "Encoding override: declared=%s detected=%s for %s",
+                    declared or "(none)", detected, url
+                )
+                resp.encoding = detected
+
             html = resp.text
             slug = slugify_url(url)
             html_path = html_dir / f"{slug}.html"
-            html_path.write_text(html, encoding="utf-8")
-            metadata[html_path.name] = _build_file_metadata(url, resp, "html")
+            if not dry_run:
+                html_path.write_text(html, encoding="utf-8")
+                metadata[html_path.name] = _build_file_metadata(url, resp, "html")
             stats["html_saved"] += 1
             stats["pages_visited"] += 1
 
@@ -436,7 +482,11 @@ def crawl_domain(
                 if link not in visited and is_same_domain(link, base_url):
                     queue.append(link)
 
+            _print_progress(domain_name, stats)
+
             if stats["html_saved"] % 50 == 0:
+                # Print on new line so the periodic log doesn't overwrite the progress bar
+                print()
                 logger.info("Progress [%s]: %d HTML, %d PDF, %d docs, %d visited",
                             domain_name, stats["html_saved"], stats["pdf_saved"],
                             stats["docs_saved"], stats["pages_visited"])
@@ -445,20 +495,25 @@ def crawl_domain(
             logger.error("Failed to fetch %s: %s", url, e)
             stats["errors"] += 1
             stats["pages_visited"] += 1
+            _print_progress(domain_name, stats)
 
         time.sleep(delay)
 
         # Save metadata and queue periodically (every 100 pages) to avoid data loss on crash
-        if stats["pages_visited"] % 100 == 0:
+        if not dry_run and stats["pages_visited"] % 100 == 0:
             _save_metadata(metadata, metadata_path)
             queue_path.write_text(json.dumps(list(queue), ensure_ascii=False), encoding="utf-8")
 
+    # End of BFS — move to new line after the progress bar
+    print()
+
     # Final saves
-    _save_metadata(metadata, metadata_path)
-    logger.info("Metadata saved: %d entries -> %s", len(metadata), metadata_path.name)
-    # Remove queue file on clean completion (no pending URLs)
-    if queue_path.exists():
-        queue_path.unlink()
+    if not dry_run:
+        _save_metadata(metadata, metadata_path)
+        logger.info("Metadata saved: %d entries -> %s", len(metadata), metadata_path.name)
+        # Remove queue file on clean completion (no pending URLs)
+        if queue_path.exists():
+            queue_path.unlink()
 
     logger.info(
         "Crawl complete [%s]: %d HTML, %d PDF, %d docs, %d errors, %d skipped, %d resumed (%d visited)",
@@ -479,6 +534,24 @@ def run():
     """Crawl all enabled domains from config."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--domain", help="Crawl only this domain name (e.g. pmf_uns)")
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        default=False,
+        help="Disable resume mode. Start BFS from scratch and overwrite existing HTML files.",
+    )
+    parser.add_argument(
+        "--html-only",
+        action="store_true",
+        default=False,
+        help="Download only HTML pages. Skip PDF and Office document downloads.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="Fetch pages but do not write any files to disk. For verification only.",
+    )
     args, _ = parser.parse_known_args()
 
     config = load_config()
@@ -495,12 +568,21 @@ def run():
         logger.warning("No enabled crawl domains found in config")
         return
 
-    logger.info("Starting crawl for %d domain(s)", len(enabled))
+    mode_flags = []
+    if args.fresh:
+        mode_flags.append("fresh")
+    if args.html_only:
+        mode_flags.append("html-only")
+    if args.dry_run:
+        mode_flags.append("dry-run")
+    mode_str = f" [{', '.join(mode_flags)}]" if mode_flags else ""
+
+    logger.info("Starting crawl for %d domain(s)%s", len(enabled), mode_str)
     keep_awake()
     logger.info("System sleep prevention enabled")
 
     try:
-        with PipelineTracker("crawl") as tracker:
+        with PipelineTracker("crawl", "Web crawler — BFS over configured domains") as tracker:
             total_html = 0
             total_pdf = 0
             total_docs = 0
@@ -513,7 +595,14 @@ def run():
                 logger.info("Crawling domain: %s (%s)", name, base_url)
                 logger.info("=" * 60)
 
-                stats = crawl_domain(name, base_url, config)
+                stats = crawl_domain(
+                    name,
+                    base_url,
+                    config,
+                    fresh=args.fresh,
+                    html_only=args.html_only,
+                    dry_run=args.dry_run,
+                )
                 total_html += stats["html_saved"]
                 total_pdf += stats["pdf_saved"]
                 total_docs += stats["docs_saved"]
