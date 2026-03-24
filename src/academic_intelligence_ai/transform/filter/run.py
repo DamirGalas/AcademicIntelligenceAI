@@ -42,7 +42,8 @@ def run(limit: int = 0) -> tuple[list[KeptFile], dict[str, dict[str, int]]]:
 
     # --- Run filters (comment out a line to skip a file type) ---
     _run_html_filter(raw_dir, strip_tags, min_text_length, seen_hashes, stats, limit, kept)
-    _run_pdf_filter(raw_dir, min_text_length, pdf_max_pages, seen_hashes, stats, limit, kept)
+    # PDF crawling disabled (html-only crawl) — PDF filter skipped
+    # _run_pdf_filter(raw_dir, min_text_length, pdf_max_pages, seen_hashes, stats, limit, kept)
     # _run_docs_filter(raw_dir, ..., seen_hashes, stats, limit, kept)
 
     _print_report(stats)
@@ -134,6 +135,7 @@ def _filter_files(
     reason_counts: dict[str, int] = {}
     stats[stats_key] = reason_counts
     logger.info("[%s] Found %d files", stats_key, len(files))
+    print()
 
     processed = 0
     for file_path in files:
@@ -172,6 +174,9 @@ def _filter_files(
         except Exception as e:
             logger.error("[%s] Failed to filter %s: %s", stats_key, file_path.name, e)
             processed += 1
+
+        kept_so_far = reason_counts.get("keep", 0)
+        print(f"\r  [{stats_key}] {processed}/{len(files)}  kept: {kept_so_far}", end="", flush=True)
 
 
 def _print_report(stats: dict[str, dict[str, int]]):

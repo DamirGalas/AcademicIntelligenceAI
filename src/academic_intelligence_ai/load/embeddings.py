@@ -37,14 +37,19 @@ def encode_chunks(
 
     all_embeddings = []
     failures = 0
+    total_batches = (len(texts) + batch_size - 1) // batch_size
 
     logger.info(
-        "Encoding %d chunks (batch_size=%d)", len(texts), batch_size
+        "Encoding %d chunks (batch_size=%d, batches=%d)", len(texts), batch_size, total_batches
     )
-    for i in range(0, len(texts), batch_size):
+    for batch_num, i in enumerate(range(0, len(texts), batch_size), 1):
         batch = texts[i : i + batch_size]
+        pct = batch_num / total_batches * 100
+        print(f"\r  embedding: {batch_num}/{total_batches} batches  {pct:.1f}%  ({i + len(batch)}/{len(texts)} chunks)", end="", flush=True)
         try:
-            vectors = model.encode(batch, show_progress_bar=False)
+            # E5 models require "passage: " prefix for indexed documents
+            prefixed = [f"passage: {t}" for t in batch]
+            vectors = model.encode(prefixed, show_progress_bar=False)
             all_embeddings.append(np.array(vectors).astype("float32"))
         except Exception as e:
             logger.error(
@@ -62,6 +67,7 @@ def encode_chunks(
             failures, len(texts),
         )
 
+    print()
     embeddings = np.vstack(all_embeddings).astype("float32")
     return embeddings, failures
 

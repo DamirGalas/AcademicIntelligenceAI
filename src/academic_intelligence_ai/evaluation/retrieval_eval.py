@@ -8,6 +8,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
 from academic_intelligence_ai.db.connection import get_connection
 from academic_intelligence_ai.monitoring.logger import get_logger
 from academic_intelligence_ai.query.search import Searcher
+from academic_intelligence_ai.utils.text import transliterate
 
 logger = get_logger("evaluation.retrieval_eval")
 
@@ -69,10 +70,15 @@ def evaluate(
     print(f"{'#':>3}  {'P@1':>4}  {'Frag':>4}  {'Score':>6}  Query")
     print(f"{'':>3}  {'':>4}  {'':>4}  {'':>6}  {'-' * 50}")
 
+    def _norm_url(u: str) -> str:
+        """Normalize URL for comparison: strip protocol and trailing slash."""
+        return u.replace("https://", "http://").rstrip("/")
+
     for i, item in enumerate(test_data):
         query = item["query"]
         expected_source = item["expected_source"]
         expected_fragment = item.get("expected_text_fragment", "")
+        norm_expected = _norm_url(expected_source)
 
         if agent:
             effective_query = agent.rewrite_query(query)
@@ -80,27 +86,30 @@ def evaluate(
             effective_query = query
         results = searcher.search(effective_query, top_k=fetch_k)
         urls = [r["url"] for r in results]
+        norm_urls = [_norm_url(u) for u in urls]
         top_score = results[0]["score"] if results else 0.0
 
         # Precision@1: expected URL matches rank-1 result
-        p1 = urls[0] == expected_source if urls else False
+        p1 = norm_urls[0] == norm_expected if norm_urls else False
         if p1:
             correct_at_1 += 1
 
         # Precision@3
-        if expected_source in urls[:3]:
+        if norm_expected in norm_urls[:3]:
             correct_at_3 += 1
 
         # Precision@9
-        if expected_source in urls[:9]:
+        if norm_expected in norm_urls[:9]:
             correct_at_9 += 1
 
         # Precision@30
-        if expected_source in urls[:30]:
+        if norm_expected in norm_urls[:30]:
             correct_at_30 += 1
 
-        # Fragment hit: check if expected text appears in any result
-        frag_hit = any(expected_fragment in r["text"] for r in results) if expected_fragment else False
+        # Fragment hit: transliterate fragment to Latin before comparing
+        # (index chunks are stored in Latin after transliteration in transform phase)
+        latin_fragment = transliterate(expected_fragment) if expected_fragment else ""
+        frag_hit = any(latin_fragment in r["text"] for r in results) if latin_fragment else False
         if frag_hit:
             fragment_hits += 1
             hit_scores.append(top_score)
@@ -108,8 +117,8 @@ def evaluate(
             miss_scores.append(top_score)
 
         # MRR
-        if expected_source in urls:
-            rank = urls.index(expected_source) + 1
+        if norm_expected in norm_urls:
+            rank = norm_urls.index(norm_expected) + 1
             mrr_total += 1.0 / rank
 
         # Per-query output

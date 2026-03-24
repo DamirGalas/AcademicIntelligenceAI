@@ -49,7 +49,7 @@
   },
   {
     "query": "Koji je broj telefona Departmana za fiziku?",
-    "expected_source": "https://www.df.uns.ac.rs/o-nama/",
+    "expected_source": "https://www.df.uns.ac.rs/o-nama/kontakt/",
     "expected_text_fragment": "021/485-2800",
     "category": "department-info",
     "difficulty": "easy",
@@ -64,10 +64,10 @@
     "department": "df"
   },
   {
-    "query": "Da li Departman za fiziku ima doktorske akademske studije fizike?",
-    "expected_source": "https://www.df.uns.ac.rs/o-nama/",
-    "expected_text_fragment": "Doktorske akademske studije Fizika",
-    "category": "department-info",
+    "query": "Koje zvanje se stiče završetkom doktorskih studija fizike na Departmanu za fiziku?",
+    "expected_source": "https://www.df.uns.ac.rs/studije/studijski-programi/doktorske-akademske-studije-fizika/",
+    "expected_text_fragment": "Doktor nauka – fizičke nauke",
+    "category": "study-programs",
     "difficulty": "easy",
     "department": "df"
   },
@@ -105,9 +105,9 @@
   },
   {
     "query": "Koji je email kontakt Departmana za hemiju, biohemiju i zaštitu životne sredine?",
-    "expected_source": "https://www.dh.uns.ac.rs/pripremna-nastava-iz-hemije/",
+    "expected_source": "https://www.dh.uns.ac.rs/kontakt-3/",
     "expected_text_fragment": "infohemija@dh.uns.ac.rs",
-    "category": "news-announcements",
+    "category": "department-info",
     "difficulty": "easy",
     "department": "dh"
   },

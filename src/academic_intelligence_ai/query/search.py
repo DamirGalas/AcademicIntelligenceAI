@@ -8,6 +8,7 @@ import yaml
 from sentence_transformers import SentenceTransformer
 
 from academic_intelligence_ai.monitoring.logger import get_logger
+from academic_intelligence_ai.utils.text import transliterate
 
 logger = get_logger("query.search")
 
@@ -74,8 +75,9 @@ class Searcher:
         if self.exclude_pdfs:
             fetch_k = max(fetch_k * 10, 300)
 
-        # Encode and normalize query vector (index uses cosine via normalized IP)
-        query_vector = self.model.encode(query).astype("float32")
+        # Transliterate Cyrillic to Latin (index is stored in Latin)
+        # then apply E5 "query: " prefix before encoding
+        query_vector = self.model.encode(f"query: {transliterate(query)}").astype("float32")
         query_vector = np.expand_dims(query_vector, axis=0)
         faiss.normalize_L2(query_vector)
 
@@ -167,7 +169,7 @@ def run():
             continue
 
         for i, r in enumerate(results, 1):
-            print(f"\n  [{i}] score={r['score']}  source={r['source']}  purpose={r['purpose']}")
+            print(f"\n  [{i}] score={r['score']}  source={r['source']}  url={r['url']}")
             print(f"      {r['text'][:200]}...")
 
         print()

@@ -80,8 +80,8 @@ load:
 
 # --- Embedding ---
 embedding:
-  model: "paraphrase-multilingual-MiniLM-L12-v2"
-  dimension: 384
+  model: "intfloat/multilingual-e5-base"
+  dimension: 768
   batch_size: 32
 
 # --- Vector DB ---

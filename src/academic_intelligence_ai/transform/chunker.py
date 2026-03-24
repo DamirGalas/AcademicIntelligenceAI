@@ -20,11 +20,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 # --- Public API ---
 
 
-def run():
+def run(fresh: bool = False):
     """Chunk all processed files and save to data/chunked/.
 
     Reads chunking config from config.yaml, processes each JSON file in
     data/processed/, and writes one output file per input to data/chunked/.
+    When fresh=False, skips files that already exist in data/chunked/.
     """
     config = _load_config()
     chunk_cfg = config.get("chunking", {})
@@ -41,27 +42,40 @@ def run():
         logger.warning("No processed files found in %s", processed_dir)
         return 0
 
-    logger.info("Chunking %d processed files (size=%d, overlap=%d, min=%d)",
-                len(files), chunk_size, chunk_overlap, min_chunk_size)
+    logger.info("Chunking %d processed files (size=%d, overlap=%d, min=%d, fresh=%s)",
+                len(files), chunk_size, chunk_overlap, min_chunk_size, fresh)
 
     total_chunks = 0
     skipped = 0
+    skipped_existing = 0
 
     for i, file_path in enumerate(files, 1):
+        output_path = output_dir / file_path.name
+
+        # Resume: skip if already chunked and fresh mode is off
+        if not fresh and output_path.exists():
+            skipped_existing += 1
+            continue
+
         try:
-            count = _chunk_one(file_path, output_dir,
+            count = _chunk_one(file_path, output_path,
                                chunk_size, chunk_overlap, min_chunk_size)
             total_chunks += count
         except Exception as e:
             logger.error("Failed to chunk %s: %s", file_path.name, e)
             skipped += 1
 
+        print(f"\r  chunking: {i}/{len(files)}  chunks: {total_chunks}", end="", flush=True)
+
         if i % 2000 == 0:
             logger.info("Progress: %d/%d files chunked (%d chunks so far)",
                         i, len(files), total_chunks)
 
-    logger.info("Chunking complete: %d files -> %d chunks (%d skipped)",
-                len(files), total_chunks, skipped)
+    print()
+    logger.info(
+        "Chunking complete: %d files -> %d chunks (%d errors, %d already existed)",
+        len(files), total_chunks, skipped, skipped_existing,
+    )
     return total_chunks
 
 
@@ -116,17 +130,25 @@ def chunk_text(text: str, chunk_size: int, chunk_overlap: int,
 # --- Internal helpers ---
 
 
-def _chunk_one(file_path: Path, output_dir: Path,
+def _chunk_one(file_path: Path, output_path: Path,
                chunk_size: int, chunk_overlap: int,
                min_chunk_size: int) -> int:
-    """Chunk a single processed JSON file and write to output_dir."""
+    """Chunk a single processed JSON file and write to output_path."""
     payload = json.loads(file_path.read_text(encoding="utf-8"))
     text = payload["text"]
     meta = payload["metadata"]
 
+    page_title = meta.get("page_title", "")
+
     chunks = chunk_text(text, chunk_size, chunk_overlap, min_chunk_size)
     if not chunks:
         return 0
+
+    # Prepend page title to each chunk for richer embedding context
+    if page_title:
+        for chunk in chunks:
+            chunk["text"] = f"[{page_title}] {chunk['text']}"
+            chunk["chunk_length"] = len(chunk["text"])
 
     output = {
         "metadata": {
@@ -146,7 +168,6 @@ def _chunk_one(file_path: Path, output_dir: Path,
         "chunks": chunks,
     }
 
-    output_path = output_dir / file_path.name
     output_path.write_text(
         json.dumps(output, ensure_ascii=False, indent=2),
         encoding="utf-8",
