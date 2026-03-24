@@ -358,7 +358,7 @@ experiment log (`data/experiments.jsonl`) or DVC. But start simple.
 
 ## Checkpoint 12: End-to-End RAG Evaluation (AI)
 
-**Status: IN PROGRESS**
+**Status: DONE**
 
 Retrieval eval (CP4) measures whether the right chunks come back. But that is only
 half the story — the actual product is the **final answer**. A system can retrieve
@@ -385,10 +385,6 @@ loop: change → measure → decide → repeat.
   - Key finding: boolean questions all score C=2 due to judge rubric strictness, not system failure
   - Key finding: 2 retrieval failures (DGT master geography, PMF doctoral chemistry)
   - Results in `e2e_eval_runs` table, note="Baseline with test answers LLM - judge LLM"
-- [ ] Add RAG eval to CI (extend CP17):
-  - Run end-to-end eval alongside retrieval eval
-  - Fail if faithfulness or correctness drops below threshold
-
 > **AI Note:** Retrieval eval tells you "did the system find the right information?"
 > RAG eval tells you "did the system give the right answer?" You need both.
 > The user does not care about P@1 — they care whether the answer is correct.
@@ -576,6 +572,8 @@ and no broken code reaches the main branch.
   3. `pytest` — all unit and integration tests from CP16
   4. Retrieval eval — run `evaluation/retrieval_eval.py` and fail if metrics drop below
      the thresholds defined in CP7
+  5. E2E RAG eval — run `evaluation/e2e_eval.py` and fail if correctness or faithfulness
+     drops below thresholds established in CP12
 - [ ] Pre-commit hooks (using the `pre-commit` framework):
   - `ruff format` — auto-format on commit so code style is never a discussion
   - `ruff check --fix` — auto-fix trivial lint issues
