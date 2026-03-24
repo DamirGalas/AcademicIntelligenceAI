@@ -310,5 +310,65 @@
     "category": "unclassified",
     "difficulty": "easy",
     "department": "dmi"
+  },
+  {
+    "query": "Ko je rukovodilac master studijskog programa Veštačka inteligencija na DMI?",
+    "expected_source": "https://www.dmi.uns.ac.rs/studijski-programi/",
+    "expected_text_fragment": "Klašnja-Milićević",
+    "category": "department-info",
+    "difficulty": "medium",
+    "department": "dmi",
+    "problem": {
+      "cause": "Chunk boundary — tačan odgovor (chunk 7) je odsecan od chunka koji sadrži Jakovetića (chunk 6). FAISS vraća vesti o AI programu i članak o Jakovetiću pre stranice studijski-programi.",
+      "fix": "Re-ranker (cross-encoder) bi izvukao chunk 7 na vrh jer direktno odgovara na pitanje. Alternativno: veći overlap ili semantic chunking."
+    }
+  },
+  {
+    "query": "Koji je telefon i email biblioteke Departmana za hemiju?",
+    "expected_source": "https://www.dh.uns.ac.rs/biblioteka-3/",
+    "expected_text_fragment": "biblioteka@dh.uns.ac.rs",
+    "category": "department-info",
+    "difficulty": "medium",
+    "department": "dh",
+    "problem": {
+      "cause": "Repetitivni DH header (+381-21-485-2720 infohemija@dh.uns.ac.rs) dominira embeddingom na svim DH stranicama. Chunk sa tačnim kontaktom biblioteke (021/485-2723, biblioteka@dh.uns.ac.rs) nikad ne uđe u FAISS top-300.",
+      "fix": "Ukloniti repetitivni header pri ekstrakciji — identifikovati koji HTML element (verovatno div.topbar ili slično) sadrži taj opšti kontakt i dodati ga u strip selektore."
+    }
+  },
+  {
+    "query": "Da li DGT ima master studije iz geografije?",
+    "expected_source": "http://www.dgt.uns.ac.rs/mas-geoinformatika/",
+    "expected_text_fragment": "MASTER AKADEMSKE STUDIJE GEOGRAFIJE",
+    "category": "department-info",
+    "difficulty": "medium",
+    "department": "dgt",
+    "problem": {
+      "cause": "Stranica mas-geoinformatika nestabilno ulazi u top-5 — biografski chunkovi profesora koji pominju master studije imaju slične skorove i potiskuju je.",
+      "fix": "Re-ranker (cross-encoder) bi direktno odgovorio na boolean pitanje bolje od embedding similarnosti."
+    }
+  },
+  {
+    "query": "Da li PMF ima doktorske studije iz hemije?",
+    "expected_source": "https://www.dh.uns.ac.rs/doktorske-akademske-studije/",
+    "expected_text_fragment": "Doktorske akademske studije",
+    "category": "department-info",
+    "difficulty": "medium",
+    "department": "dh",
+    "problem": {
+      "cause": "Boolean pitanje privlači stranice doktorskih studija fizike i alumni DH stranice jače od same DH doktorske stranice. Prava stranica ne ulazi u top-5.",
+      "fix": "Re-ranker bi direktno odgovorio na boolean pitanje. Alternativno: query rewriting da eksplicitno pomene DH/hemiju."
+    }
+  },
+  {
+    "query": "Koji je email Jelene Petrović iz sekretarijata Departmana za hemiju?",
+    "expected_source": "https://www.dh.uns.ac.rs/nenastavno-osoblje-2/",
+    "expected_text_fragment": "jelena.petrovic@dh.uns.ac.rs",
+    "category": "department-info",
+    "difficulty": "medium",
+    "department": "dh",
+    "problem": {
+      "cause": "DH header (+381-21-485-2720 infohemija@dh.uns.ac.rs) dominira embeddingom svih DH stranica. Chunk sa tačnim kontaktom (score=0.8625) pada ispod chunk 0 sa headerom (score=0.8916) i ostalih DH stranica (~0.87).",
+      "fix": "Ukloniti repetitivni DH header pri ekstrakciji — identifikovati HTML element i dodati ga u strip selektore. Ovo je isti problem kao kod pitanja o biblioteci DH (Q41)."
+    }
   }
 ]

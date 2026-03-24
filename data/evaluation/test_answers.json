@@ -379,7 +379,7 @@
   },
   {
     "id": 55,
-    "query": "Da li PMF obezbeđuje parking za studente i koliko mesta ima?",
+    "query": "Koliko tačno parking mesta ima PMF za studente?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "pmf"

@@ -44,6 +44,7 @@ class Searcher:
         self.relevance_filter = True  # can be disabled for eval baselines
         self.exclude_pdfs = query_cfg.get("exclude_pdfs", True)
         self.allowed_categories: list[str] | None = query_cfg.get("allowed_categories", None)
+        self.max_chunks_per_url = query_cfg.get("max_chunks_per_url", 2)
 
         logger.info("Loading embedding model: %s", model_name)
         self.model = SentenceTransformer(model_name)
@@ -133,13 +134,14 @@ class Searcher:
                 "text": row[0],
             })
 
-        # Deduplicate by URL — keep only the highest-scoring chunk per page
-        seen_urls: dict[str, dict] = {}
+        # Deduplicate by URL — keep top N chunks per page
+        seen_urls: dict[str, list] = {}
         for r in results:
             url = r["url"]
-            if url not in seen_urls or r["score"] > seen_urls[url]["score"]:
-                seen_urls[url] = r
-        results = list(seen_urls.values())
+            chunks = seen_urls.setdefault(url, [])
+            if len(chunks) < self.max_chunks_per_url:
+                chunks.append(r)
+        results = [r for chunks in seen_urls.values() for r in chunks]
 
         # Re-sort after boosting and deduplication, trim to requested top_k
         results.sort(key=lambda x: x["score"], reverse=True)

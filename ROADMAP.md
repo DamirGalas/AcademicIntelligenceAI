@@ -404,7 +404,7 @@ is minimal compared to changing chunking or retrieval architecture.
   - Replaced Ollama client with OpenAI SDK client (`query/llm_client.py`) — Ollama removed entirely
   - API key in `.env`, `python-dotenv` added as dependency
   - Interface: `generate(messages, tools=None)` — messages format, tool calling ready
-- [ ] **Tool calling** — LLM decides when and how to search:
+- [x] **Tool calling** — LLM decides when and how to search:
   - Define a `search_knowledge_base` tool with OpenAI function calling schema
   - LLM receives the user question and decides: answer directly OR call the tool
   - LLM formulates its own search query (often better than raw user input)
@@ -412,22 +412,23 @@ is minimal compared to changing chunking or retrieval architecture.
   - If tool is not called: LLM responds directly (e.g., "Hvala" → no search needed)
   - This is the foundation for CP15 (Agentic RAG) — learn the mechanic here, expand later
   - Compare quality: tool calling vs. always-search baseline on the eval set
-- [ ] Few-shot examples in the system prompt:
-  - Add 3-5 examples of (question, context, ideal_answer) directly in the prompt
-  - These guide the LLM on tone, length, format, and when to say "I don't know"
-  - Use real queries from your eval set as examples
-- [ ] Source attribution — LLM cites which chunk(s) it used:
-  - Include chunk IDs or source URLs in the prompt context
-  - Instruct the LLM to reference them in the answer (e.g., "[Izvor: pmf.uns.ac.rs/informatika]")
+- [x] Few-shot examples in the system prompt:
+  - Added 4 examples (factual, boolean, unanswerable, procedural) directly in system prompt
+  - Guide LLM on tone, length, format, and when to say "I don't know"
+- [x] Source attribution — LLM cites which chunk(s) it used:
+  - LLM instructed to append most relevant source as [Izvor: URL] at end of answer
+  - No source when answer is "Sistem ne poseduje tu informaciju"
 - [ ] Structured output format:
   - Answer: the actual response to the user
   - Sources: list of source URLs used (from chunk metadata)
   - Confidence: high/medium/low based on retrieval scores
   - Parse this structured output in code for downstream use (API, logging)
+  - **Decision: skipped for now** — confidence can be computed from chunk scores in code; structured output adds complexity without clear benefit at this stage
 - [ ] Chain-of-thought prompting for complex questions:
   - For multi-part questions ("Koji su predmeti na prvoj godini i ko ih predaje?"),
     instruct the LLM to reason step by step before giving the final answer
   - This reduces hallucination on complex queries
+  - **Decision: skipped for now** — only 2 multi-part questions in test set; not worth the token cost
 - [ ] Experiment with different LLM models and compare quality:
   - Mistral 7B (current), Llama 3, Gemma 2, or larger models if hardware allows
   - For each: run the same 50 queries, evaluate answers, compare latency and quality
@@ -616,6 +617,16 @@ If retrieval and answer quality are already good enough, skip to Phase 6.*
 Moving beyond basic vector search to production-grade retrieval. This includes
 both the retrieval algorithm and the embedding model — both determine what the
 system can find.
+
+### Boilerplate removal (transform step)
+- [ ] Add domain-level boilerplate detection before chunking:
+  - For each domain, find text fragments (sentences) that appear in >30% of pages
+  - Analysis confirmed DH is worst offender (97% of pages share header with `infohemija@dh.uns.ac.rs`,
+    `+381-21-485-2720`, `Envelope Facebook Instagram...`) — causes all DH embeddings to cluster together
+    and correct answers (e.g. specific contact info) to be drowned out by header noise
+  - Strip detected boilerplate from processed text before chunking, re-run full embed + index
+  - Verified impact: chunk with `jelena.petrovic@dh.uns.ac.rs` scores 0.8625 vs header chunk 0.8916 —
+    after strip, specific content chunks should rank much higher
 
 ### Embedding model experiments
 - [ ] Benchmark alternative embedding models on your eval set:

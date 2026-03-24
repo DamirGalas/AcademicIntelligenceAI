@@ -18,7 +18,7 @@ from pathlib import Path
 from academic_intelligence_ai.db.connection import get_connection
 from academic_intelligence_ai.evaluation.judge import Judge
 from academic_intelligence_ai.monitoring.logger import get_logger
-from academic_intelligence_ai.query.rag import RAGPipeline
+from academic_intelligence_ai.query.rag import RAGPipeline, RAGToolPipeline
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -28,7 +28,7 @@ logger = get_logger("evaluation.e2e_eval")
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
-def run(note: str = "", limit: int = 0, top_k: int = 5, judge_model: str = "gpt-4o"):
+def run(note: str = "", limit: int = 0, top_k: int = 5, judge_model: str = "gpt-4o", mode: str = "pipeline"):
     """Run E2E evaluation against test_answers.json.
 
     Args:
@@ -36,6 +36,7 @@ def run(note: str = "", limit: int = 0, top_k: int = 5, judge_model: str = "gpt-
         limit:       If > 0, only evaluate first N questions (for smoke tests)
         top_k:       Number of chunks to retrieve per query
         judge_model: Model to use for judging (default: gpt-4o)
+        mode:        "pipeline" (classic always-search) or "tool" (LLM decides when to search)
     """
     test_file = PROJECT_ROOT / "data" / "evaluation" / "test_answers.json"
     test_data = json.loads(test_file.read_text(encoding="utf-8"))
@@ -44,10 +45,10 @@ def run(note: str = "", limit: int = 0, top_k: int = 5, judge_model: str = "gpt-
         test_data = test_data[:limit]
 
     total = len(test_data)
-    logger.info("Starting E2E eval: %d questions, top_k=%d, judge=%s, note='%s'",
-                total, top_k, judge_model, note)
+    logger.info("Starting E2E eval: %d questions, top_k=%d, judge=%s, mode=%s, note='%s'",
+                total, top_k, judge_model, mode, note)
 
-    rag = RAGPipeline(top_k=top_k)
+    rag = RAGToolPipeline(top_k=top_k) if mode == "tool" else RAGPipeline(top_k=top_k)
     judge = Judge(model=judge_model)
     conn = get_connection()
 
@@ -167,6 +168,7 @@ if __name__ == "__main__":
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--judge-model", default="gpt-4o")
+    parser.add_argument("--mode", default="pipeline", choices=["pipeline", "tool"])
     args = parser.parse_args()
 
     run(
@@ -174,4 +176,5 @@ if __name__ == "__main__":
         limit=args.limit,
         top_k=args.top_k,
         judge_model=args.judge_model,
+        mode=args.mode,
     )
