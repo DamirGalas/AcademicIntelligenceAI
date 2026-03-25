@@ -1,10 +1,7 @@
 # Academic Intelligence AI — Production Roadmap
 > Goal: Build a production-ready RAG system for academic information retrieval,
-> Goal: Build a production-ready RAG system for academic information retrieval,
 > covering all key competencies expected from an AI Engineer in practice.
-## Execution Phases — Overview
----
-  Core pipeline + observability + retrieval + RAG + spec — built on 6 test pages
+
 ## Execution Phases — Overview
 
 ```
@@ -115,7 +112,7 @@ Measuring retrieval quality with quantitative metrics — a core AI engineering 
 Retrieval-Augmented Generation — search + LLM = answer.
 
 - [x] RAG orchestration: search -> prompt building -> LLM -> answer (`query/rag.py`)
-- [x] LLM client for local Ollama/Mistral (`query/llm_client.py`)
+- [x] LLM client — initially Ollama/Mistral, replaced by GPT-4o-mini in CP13 (`query/llm_client.py`)
 - [x] System prompt in Serbian with strict context-only answering
 - [x] Fallback response when no relevant chunks found
 - [x] Interactive CLI for testing (`rag.py:run()`)
@@ -437,8 +434,9 @@ is minimal compared to changing chunking or retrieval architecture.
   - This reduces hallucination on complex queries
   - **Decision: revisit after boilerplate fix** — retrieval quality blocks CoT benefit
 - [ ] Experiment with different LLM models and compare quality:
-  - Mistral 7B (current), Llama 3, Gemma 2, or larger models if hardware allows
-  - For each: run the same 50 queries, evaluate answers, compare latency and quality
+  - Current: GPT-4o-mini (OpenAI API)
+  - Candidates: GPT-4o, Claude Haiku/Sonnet, or open-source models via API
+  - For each: run the same eval set, compare correctness, faithfulness, latency, cost
 
 > **AI Note:** Prompt engineering is not "trying random things." It is systematic
 > experimentation: change one variable, measure the output, keep what works.
@@ -507,9 +505,10 @@ multiple searches, and produces a reasoning trace — all of which affect how yo
   - Builds on single-tool calling from CP13 — expand to multi-step reasoning
   - Start with the simplest useful agent: "search, check confidence, re-search if low"
   - This 2-step pattern alone covers a large class of failed queries
-- [ ] Multi-step retrieval — agent breaks complex questions into sub-queries:
-  - Example: "Uporedi predmete na informatici i matematici" -> two separate searches,
-    then combine results
+- [x] Multi-step retrieval — agent breaks complex questions into sub-queries:
+  - Already implemented in CP13 (`RAGToolPipeline` with max_tool_calls loop)
+  - LLM splits multi-part/comparative questions and calls search_knowledge_base per sub-query
+  - CP15 extends this with query rewriting, confidence checks, and richer tool catalog
 - [ ] Query rewriting — agent reformulates the query if first search returns low-confidence results
 - [ ] Expanded tool catalog (building on `search_knowledge_base` from CP13):
   - `search_knowledge_base` — semantic search over indexed chunks (already built in CP13)
@@ -627,6 +626,9 @@ system can find.
 
 ### Boilerplate removal (transform step)
 - [ ] Add domain-level boilerplate detection before chunking:
+  - **Note:** this was identified as a CP13 blocker — multi-turn tool calling eval showed
+    correct sub-queries being formed but retrieval returning wrong chunks due to boilerplate
+    noise. Full analysis in `docs/boilerplate_analysis.md`.
   - For each domain, find text fragments (sentences) that appear in >30% of pages
   - Analysis confirmed DH is worst offender (97% of pages share header with `infohemija@dh.uns.ac.rs`,
     `+381-21-485-2720`, `Envelope Facebook Instagram...`) — causes all DH embeddings to cluster together
@@ -945,8 +947,8 @@ collection — the most important data source for system improvement.
 | **1** | 9 | Dataset Filtering & Categorization | DONE |
 | **1** | 10 | Embed, Index & Scale Verification | DONE |
 | **1** | 11 | Re-evaluation at Scale (AI) | DONE |
-| **2** | 12 | E2E RAG Evaluation — baseline first (AI) | TODO |
-| **2** | 13 | Prompt Engineering, Tool Calling & LLM (AI) | TODO |
+| **2** | 12 | E2E RAG Evaluation — baseline first (AI) | DONE |
+| **2** | 13 | Prompt Engineering, Tool Calling & LLM (AI) | IN PROGRESS |
 | **3** | 14 | Minimal Frontend for User Validation | TODO |
 | **3** | 15 | Agentic RAG (AI) | TODO |
 | **4** | 16 | Testing | TODO |
