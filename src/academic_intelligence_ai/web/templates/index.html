@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PMF Academic Intelligence</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header>
+    <nav>
+      {% for name, url in sources %}
+        <a href="{{ url }}" target="_blank" rel="noopener">{{ name }}</a>
+      {% endfor %}
+    </nav>
+  </header>
+
+  <main>
+    <h1>PMF Academic Intelligence</h1>
+    <p class="subtitle">Postavi pitanje o studiranju na Prirodno-matematičkom fakultetu u Novom Sadu.</p>
+
+    <div class="search-box">
+      <textarea id="query" placeholder="Npr. Koji su predmeti na prvoj godini informatike?" rows="3"></textarea>
+      <button id="ask-btn" onclick="ask()">Pitaj</button>
+    </div>
+
+    <div id="result" class="result hidden">
+      <div class="answer-section">
+        <h2>Odgovor</h2>
+        <p id="answer"></p>
+      </div>
+      <div id="sources-section" class="sources-section hidden">
+        <h3>Izvori</h3>
+        <ul id="sources-list"></ul>
+      </div>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+  </main>
+
+  <script>
+    async function ask() {
+      const query = document.getElementById("query").value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById("ask-btn");
+      btn.disabled = true;
+      btn.textContent = "Tražim...";
+
+      document.getElementById("result").classList.add("hidden");
+      document.getElementById("error").classList.add("hidden");
+
+      try {
+        const res = await fetch("/ask", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({query})
+        });
+        const data = await res.json();
+
+        document.getElementById("answer").textContent = data.answer;
+
+        const sourcesList = document.getElementById("sources-list");
+        const sourcesSection = document.getElementById("sources-section");
+        sourcesList.innerHTML = "";
+
+        if (data.sources && data.sources.length > 0) {
+          data.sources.forEach(url => {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.href = url;
+            a.textContent = url;
+            a.target = "_blank";
+            a.rel = "noopener";
+            li.appendChild(a);
+            sourcesList.appendChild(li);
+          });
+          sourcesSection.classList.remove("hidden");
+        } else {
+          sourcesSection.classList.add("hidden");
+        }
+
+        document.getElementById("result").classList.remove("hidden");
+      } catch (e) {
+        const err = document.getElementById("error");
+        err.textContent = "Greška pri komunikaciji sa serverom.";
+        err.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Pitaj";
+      }
+    }
+
+    document.getElementById("query").addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        ask();
+      }
+    });
+  </script>
+
+</body>
+</html>

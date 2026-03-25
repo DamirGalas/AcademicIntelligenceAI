@@ -446,5 +446,12 @@
     "expected_answer": "Na Departmanu za fiziku postoje: Katedra za eksperimentalnu fiziku kondenzovane materije, Katedra za fizičku elektroniku, Katedra za nuklearnu fiziku, Katedra za opštu fiziku i metodiku nastave fizike, Katedra za radijacionu i subatomsku fiziku i Katedra za teorijsku fiziku. Na Departmanu za hemiju, biohemiju i zaštitu životne sredine postoji Katedra za biohemiju i hemiju prirodnih proizvoda (sa 29 članova).",
     "answer_type": "comparative",
     "department": "df"
+  },
+  {
+    "id": 65,
+    "query": "Koje predmete predaje Petar Mali?",
+    "expected_answer": "Profesor Petar Mali predaje: Matematika (osnovne strukovne studije Optometrija), Metodologija istraživačkog rada (osnovne akademske studije Fizika, osnovne strukovne studije Optometrija), Osnovi matematičke fizike (osnovne akademske studije Fizika), Matematička fizika (osnovne akademske studije Fizika), Simetrije u fizici (osnovne akademske studije Fizika), Napredna kvantna mehanika i Nelinearne pojave u kondenzovanim sistemima (master studije), te Viši kurs nelinearnih pojava u kondenzovanim sistemima (doktorske studije).",
+    "answer_type": "factual",
+    "department": "df"
   }
 ]

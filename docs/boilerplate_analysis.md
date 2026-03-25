@@ -107,3 +107,24 @@ Fixing DH (844 pages × ~97%) and DF (307 pages × 6–7 wasted chunks) alone
 could significantly improve retrieval. DBE old (1347 pages) is a bonus.
 
 After fix: full re-embed + re-index required (~83k chunks).
+
+## Confirmed production impact (2026-03-25)
+
+Manual test: query "Koje predmete predaje Petar Mali?" against the live index
+revealed the full severity of the DF boilerplate problem.
+
+The page `https://www.df.uns.ac.rs/o-nama/imenik/petar-mali/` has 23 chunks in
+the index. The chunk containing "Nastava i kursevi" (course list) is at index
+~9. With `max_chunks_per_url=2`, the top-2 FAISS results for this query were
+both boilerplate nav chunks — the answer chunk never surfaced.
+
+**Workarounds applied (temporary, to be removed after proper fix):**
+- `max_chunks_per_url` increased from 2 → 10 (config)
+- Heuristic text filter in `search.py` to skip chunks containing
+  `Skip to content`, `▸▸▸`, `Meni Početak`, `Vesti Vesti sa Departmana`,
+  `Korisni linkovi Veb servisi`, `UNS dokumenti` + `Vesti`
+
+These workarounds allowed the correct answer to surface, but are fragile and
+domain-specific. The real fix remains Option A/C in the transform stage.
+
+Test case added: id=65 "Koje predmete predaje Petar Mali?" (type: factual, dept: df)
