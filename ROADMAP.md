@@ -41,7 +41,7 @@ PHASE 6: Production (CP21-27)
 ## Checkpoint 1: Core Data Pipeline (ETL)
 # Phase 0: Foundation
 
-*Built on 6 hand-picked test pages. Validates the core approach before scaling. *
+*Built on 6 hand-picked test pages. Validates the core approach before scaling.*
 
 ---
 
