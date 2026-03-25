@@ -393,7 +393,7 @@ loop: change → measure → decide → repeat.
 
 ## Checkpoint 13: Prompt Engineering, Tool Calling & LLM Quality (AI)
 
-**Status: TODO**
+**Status: IN PROGRESS**
 
 The prompt is basic. This is the **highest-ROI improvement** you can make right
 now — small prompt changes have outsized impact on answer quality, and the effort
@@ -424,11 +424,18 @@ is minimal compared to changing chunking or retrieval architecture.
   - Confidence: high/medium/low based on retrieval scores
   - Parse this structured output in code for downstream use (API, logging)
   - **Decision: skipped for now** — confidence can be computed from chunk scores in code; structured output adds complexity without clear benefit at this stage
+- [x] Multi-turn tool calling for complex questions:
+  - LLM splits multi-part/comparative questions into multiple sub-queries
+  - Calls search_knowledge_base once per sub-query (up to max_tool_calls=3)
+  - reasoning parameter added to tool schema — LLM explains its split strategy
+  - Tool query description instructs LLM to formulate concrete questions, not keyword lists
+  - Eval result: F improved (2.17→2.83) but C unchanged — retrieval is the bottleneck
+  - Conclusion: prompt optimization is at its limit; boilerplate fix (CP19) must come first
 - [ ] Chain-of-thought prompting for complex questions:
   - For multi-part questions ("Koji su predmeti na prvoj godini i ko ih predaje?"),
     instruct the LLM to reason step by step before giving the final answer
   - This reduces hallucination on complex queries
-  - **Decision: skipped for now** — only 2 multi-part questions in test set; not worth the token cost
+  - **Decision: revisit after boilerplate fix** — retrieval quality blocks CoT benefit
 - [ ] Experiment with different LLM models and compare quality:
   - Mistral 7B (current), Llama 3, Gemma 2, or larger models if hardware allows
   - For each: run the same 50 queries, evaluate answers, compare latency and quality

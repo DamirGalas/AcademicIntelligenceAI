@@ -28,7 +28,7 @@ logger = get_logger("evaluation.e2e_eval")
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
-def run(note: str = "", limit: int = 0, top_k: int = 5, judge_model: str = "gpt-4o", mode: str = "pipeline"):
+def run(note: str = "", limit: int = 0, top_k: int = 5, judge_model: str = "gpt-4o", mode: str = "pipeline", types: list[str] | None = None):
     """Run E2E evaluation against test_answers.json.
 
     Args:
@@ -37,9 +37,13 @@ def run(note: str = "", limit: int = 0, top_k: int = 5, judge_model: str = "gpt-
         top_k:       Number of chunks to retrieve per query
         judge_model: Model to use for judging (default: gpt-4o)
         mode:        "pipeline" (classic always-search) or "tool" (LLM decides when to search)
+        types:       If set, only evaluate questions with these answer_type values
     """
     test_file = PROJECT_ROOT / "data" / "evaluation" / "test_answers.json"
     test_data = json.loads(test_file.read_text(encoding="utf-8"))
+
+    if types:
+        test_data = [q for q in test_data if q["answer_type"] in types]
 
     if limit > 0:
         test_data = test_data[:limit]
@@ -169,6 +173,7 @@ if __name__ == "__main__":
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--judge-model", default="gpt-4o")
     parser.add_argument("--mode", default="pipeline", choices=["pipeline", "tool"])
+    parser.add_argument("--types", nargs="+", help="Filter by answer_type (e.g. --types multi_part comparative)")
     args = parser.parse_args()
 
     run(
@@ -177,4 +182,5 @@ if __name__ == "__main__":
         top_k=args.top_k,
         judge_model=args.judge_model,
         mode=args.mode,
+        types=args.types,
     )

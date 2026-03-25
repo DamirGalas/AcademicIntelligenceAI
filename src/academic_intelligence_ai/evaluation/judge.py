@@ -33,6 +33,8 @@ Posebna pravila po tipu pitanja:
 - "boolean": ocena 3 ako je da/ne odgovor tačan — detalji nisu obavezni za pun bod. Mora da bude neosporno da je odgovor tačan. Ukoliko postoji sumnja onda to treba da bude navedeno u odgovoru.
 - "factual": strogo proveravaj tačnost konkretnih podataka (emailovi, telefoni, imena)
 - "procedural": ocena 3 ako su navedeni ispravni koraci, čak i bez svih detalja. Detalji moraju da budu u generisanim odgovorima. Ne mogu da se izmisljaju.
+- "multi_part": ocena 3 samo ako su SVE komponente pitanja odgovorene tačno — svaki deo se ocenjuje jednako strogo kao "factual". Ocena 2 ako je odgovorena samo jedna od dve komponente.
+- "comparative": ocena 3 ako su oba entiteta tačno opisana i poređenje je ispravno. Ocena 2 ako je jedan entitet tačan a drugi nepotpun ili nedostaje.
 
 Odgovori ISKLJUČIVO u JSON formatu:
 {{"correctness": <1|2|3>, "reasoning": "<kratko objašnjenje>"}}

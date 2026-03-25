@@ -416,7 +416,35 @@
     "id": 60,
     "query": "Gde studenti fizike mogu obavljati stručnu praksu i koje akreditovane laboratorije postoje na samom Departmanu za fiziku?",
     "expected_answer": "Studenti fizike mogu obavljati stručnu praksu u naučnim institutima: Institut BioSens u Novom Sadu, Institut za fiziku u Beogradu i Institut za nuklearne nauke Vinča, a studenti medicinskog usmerenja u Institutu za onkologiju Vojvodine i Univerzitetskom kliničkom centru Vojvodine. Na samom Departmanu za fiziku postoje akreditovane laboratorije: Laboratorija za ispitivanje radioaktivnosti uzoraka i doze jonizujućeg i nejonizujućeg zračenja i Laboratorija za etaloniranje gama-spektrometara i aktivnosti radioaktivnih izvora gama emitera.",
-    "answer_type": "multi-part",
+    "answer_type": "multi_part",
+    "department": "df"
+  },
+  {
+    "id": 61,
+    "query": "Ko su prodekani za nastavu i nauku na PMF-u i koji su im kontakti?",
+    "expected_answer": "Prodekan za nastavu je dr Ljubica Ivanović Bibić (kancelarija 10, međusprat, tel. +381-21-485-2717, email nastava@pmf.uns.ac.rs). Prodekan za nauku, međunarodnu saradnju i razvoj je dr Dušan Mrđa (kancelarija 7, međusprat, tel. +381-21-485-2703, email nauka@pmf.uns.ac.rs).",
+    "answer_type": "multi_part",
+    "department": "pmf"
+  },
+  {
+    "id": 62,
+    "query": "Koje katedre postoje na Departmanu za fiziku i koliko knjiga ima biblioteka Departmana za hemiju?",
+    "expected_answer": "Na Departmanu za fiziku postoje: Katedra za eksperimentalnu fiziku kondenzovane materije, Katedra za fizičku elektroniku, Katedra za nuklearnu fiziku, Katedra za opštu fiziku i metodiku nastave fizike, Katedra za radijacionu i subatomsku fiziku i Katedra za teorijsku fiziku. Biblioteka Departmana za hemiju raspolaže sa 19.861 primerkom monografskih publikacija i 406 naslova domaće i strane periodike.",
+    "answer_type": "multi_part",
+    "department": "df"
+  },
+  {
+    "id": 63,
+    "query": "Koji od ova dva departmana ima doktorske studije — DMI ili Departman za fiziku?",
+    "expected_answer": "Oba departmana imaju doktorske studije. DMI ima doktorske akademske studije informatike (3 godine, 180 ESPB, rukovodilac dr Miloš Radovanović). Departman za fiziku nudi doktorske akademske studije fizike.",
+    "answer_type": "comparative",
+    "department": "dmi"
+  },
+  {
+    "id": 64,
+    "query": "Koje katedre postoje na Departmanu za fiziku i koje na Departmanu za hemiju?",
+    "expected_answer": "Na Departmanu za fiziku postoje: Katedra za eksperimentalnu fiziku kondenzovane materije, Katedra za fizičku elektroniku, Katedra za nuklearnu fiziku, Katedra za opštu fiziku i metodiku nastave fizike, Katedra za radijacionu i subatomsku fiziku i Katedra za teorijsku fiziku. Na Departmanu za hemiju, biohemiju i zaštitu životne sredine postoji Katedra za biohemiju i hemiju prirodnih proizvoda (sa 29 članova).",
+    "answer_type": "comparative",
     "department": "df"
   }
 ]
