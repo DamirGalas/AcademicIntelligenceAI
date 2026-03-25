@@ -110,7 +110,7 @@ Tool code is written for the **agent** as the target audience, not for humans.
 
 ## How this applies to our project
 
-### CP12: Single tool — `search_knowledge_base`
+### CP13: Single tool — `search_knowledge_base`
 
 ```python
 tools = [{"type": "function", "function": {
@@ -135,7 +135,7 @@ System prompt stays short:
 Everything else (scoring, freshness, filtering, ranking) happens in the
 tool's Python code, not in the prompt.
 
-### CP16: Expanded tool catalog
+### CP15: Expanded tool catalog
 
 | Tool | Type | Purpose |
 |------|------|---------|

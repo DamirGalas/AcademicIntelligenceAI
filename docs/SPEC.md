@@ -32,8 +32,8 @@ URLs, content types, and timestamps.
 | Name | Domain | Purpose | Content types |
 |------|--------|---------|---------------|
 | pmf_uns | www.pmf.uns.ac.rs | general_info | HTML, PDF, Office docs |
-| dmi | dmi.pmf.uns.ac.rs | department_info | HTML, PDF, Office docs |
-| df | dfold.pmf.uns.ac.rs | department_info | HTML, PDF, Office docs |
+| dmi | www.dmi.uns.ac.rs | department_info | HTML, PDF, Office docs |
+| df | www.df.uns.ac.rs | department_info | HTML, PDF, Office docs |
 | dh | www.dh.uns.ac.rs | department_info | HTML, PDF, Office docs |
 | dbe | wwwold.dbe.pmf.uns.ac.rs | department_info | HTML, PDF, Office docs |
 | dgt | www.dgt.uns.ac.rs | department_info | HTML, PDF, Office docs |
@@ -107,17 +107,17 @@ The system must answer these correctly. Used for regression testing.
 
 ## 6. Quality Targets
 
-### Current baseline (CP4/CP6, 6 pages, 88 chunks)
+### Current baseline (CP12, full dataset, 83k chunks, GPT-4o-mini)
 
 | Metric | Value |
 |--------|-------|
-| P@1 | 95% |
-| P@3 | 95% |
-| MRR | 0.95 |
-| FragmentHit@5 | 75% |
-| Fallback rate (manual) | 50% (6/12 queries) |
-| Retrieval latency | ~2s |
-| LLM latency (local Mistral 7B) | ~31s avg |
+| Answer correctness (avg) | 2.47 / 3.0 |
+| Answer pass rate (C=3) | 58.3% |
+| Faithfulness (avg) | 2.18 / 3.0 |
+| LLM latency (GPT-4o-mini) | < 2s |
+| Total latency | ~4–6s |
+
+*Earlier retrieval-only baseline (CP4/CP6, 6 pages): P@1=95%, MRR=0.95 — obsolete after full-scale index.*
 
 ### Production targets (after CP11-14)
 
@@ -182,7 +182,7 @@ crawl → transform → chunk → embed → index → query → respond
 | 6. Query | `query/retriever.py` | User question | Top-k chunks by cosine similarity |
 | 7. Respond | `rag/generator.py` | Chunks + question | Structured response (R1–R11) |
 
-### Tool calling (CP12+)
+### Tool calling (CP13+)
 
 The LLM does not always search. Instead, it receives a tool definition
 (`search_knowledge_base`) and decides per query whether to call it:
