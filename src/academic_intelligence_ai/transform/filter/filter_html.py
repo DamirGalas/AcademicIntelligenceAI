@@ -65,11 +65,96 @@ def _parse_and_clean(raw_html: str, strip_tags: list[str]) -> tuple[str, str]:
     for tag in soup(strip_tags):
         tag.decompose()
 
-    text = soup.get_text(separator=" ")
+    # Layer 1: prefer semantic content containers (domain-agnostic)
+    content_node = (
+        soup.find("main")
+        or soup.find("article")
+        or soup.find(id="content")
+        or soup.find(id="main-content")
+        or soup.find(class_="entry-content")
+        or soup.find(id="primary")
+    )
+
+    source = content_node if content_node else soup
+    if content_node:
+        logger.debug("Using semantic container <%s> for text extraction", content_node.name)
+
+    text = source.get_text(separator=" ")
+
+    # Layer 2: domain-specific boilerplate strip
+    text = _strip_domain_boilerplate(text)
+
     # Collapse whitespace into single spaces
     clean_text = " ".join(text.split())
 
     return clean_text, title
+
+
+def _strip_domain_boilerplate(text: str) -> str:
+    """Strip known domain-specific navigation/boilerplate from extracted text.
+
+    Only strips markers found within the first 2000 characters to avoid
+    accidentally removing content that happens to contain the same phrases.
+    """
+    # DF (www.df.uns.ac.rs): heavy nav block starting with "Meni Početak"
+    marker_pos = text.find("Meni Po\u010detak")  # Meni Početak
+    if marker_pos != -1 and marker_pos < 2000:
+        end_marker = "Vesti sa PMF-a Doga\u0111aji"  # Vesti sa PMF-a Događaji
+        end_pos = text.find(end_marker, marker_pos)
+        if end_pos != -1:
+            strip_end = end_pos + len(end_marker)
+            logger.debug("DF boilerplate: stripping %d chars (Meni Početak...Događaji)", strip_end - marker_pos)
+            text = text[:marker_pos] + text[strip_end:]
+        else:
+            # Fallback: try shorter end marker
+            end_marker_short = "Vesti sa PMF-a"
+            end_pos = text.find(end_marker_short, marker_pos)
+            if end_pos != -1:
+                strip_end = end_pos + len(end_marker_short)
+                logger.debug("DF boilerplate: stripping %d chars (Meni Početak...Vesti sa PMF-a)", strip_end - marker_pos)
+                text = text[:marker_pos] + text[strip_end:]
+
+    # DH (www.dh.uns.ac.rs): nav from "Skip to content" to "Linkedin-in"
+    skip_pos = text.find("Skip to content")
+    linkedin_pos = text.find("Linkedin-in")
+    if skip_pos != -1 and linkedin_pos != -1 and skip_pos < 2000 and skip_pos < linkedin_pos:
+        strip_end = linkedin_pos + len("Linkedin-in")
+        logger.debug("DH boilerplate: stripping %d chars (Skip to content...Linkedin-in)", strip_end - skip_pos)
+        text = text[:skip_pos] + text[strip_end:]
+
+    # DMI (www.dmi.uns.ac.rs): prefix with department name + "Skip to content"
+    dmi_marker = "\u2013 Departman za matematiku i informatiku Skip to content"  # – Departman...
+    dmi_pos = text.find(dmi_marker)
+    if dmi_pos != -1 and dmi_pos < 2000:
+        strip_end = dmi_pos + len(dmi_marker)
+        logger.debug("DMI boilerplate: stripping %d chars (prefix through Skip to content)", strip_end)
+        text = text[strip_end:]
+
+    # DBE (wwwold.dbe.pmf.uns.ac.rs): English nav header ending with "SEARCH"
+    dbe_marker = "Department of Biology and Ecology Faculty of Sciences about STUDYING"
+    dbe_pos = text.find(dbe_marker)
+    if dbe_pos != -1 and dbe_pos < 2000:
+        search_pos = text.find("SEARCH", dbe_pos)
+        if search_pos != -1:
+            strip_end = search_pos + len("SEARCH")
+            logger.debug("DBE boilerplate: stripping %d chars (header through SEARCH)", strip_end - dbe_pos)
+            text = text[:dbe_pos] + text[strip_end:]
+
+    # DBE footer
+    dbe_footer = "Faculty of Sciences, University of Novi Sad Trg Dositeja Obradovi\u0107a 3"
+    footer_pos = text.find(dbe_footer)
+    if footer_pos != -1 and footer_pos > len(text) // 2:
+        logger.debug("DBE boilerplate: stripping footer from pos %d", footer_pos)
+        text = text[:footer_pos]
+
+    # PMF (www.pmf.uns.ac.rs): simple prefix
+    pmf_marker = "Skip to main content"
+    pmf_pos = text.find(pmf_marker)
+    if pmf_pos != -1 and pmf_pos < 200:
+        text = text[:pmf_pos] + text[pmf_pos + len(pmf_marker):]
+        logger.debug("PMF boilerplate: stripped 'Skip to main content' prefix")
+
+    return text
 
 
 def _check_error_page(clean_text: str, title: str) -> FilterResult | None:

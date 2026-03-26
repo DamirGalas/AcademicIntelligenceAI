@@ -169,7 +169,6 @@ class RAGToolPipeline:
             new_chunks = self.searcher.search(search_query, top_k=self.top_k)
             chunks.extend(new_chunks)
             context = "\n\n".join(f"[Izvor: {c['url']}]\n{c['text']}" for c in new_chunks)
-
             messages = messages + [
                 {
                     "role": "assistant",
