@@ -53,13 +53,8 @@ crawler:
                      ".exe", ".dll", ".bin",
                      ".css", ".js", ".woff", ".woff2", ".ttf", ".eot"]
 
-# --- Legacy single-page sources (kept for backwards compatibility) ---
-sources:
-  - name: "reddit_pmf"
-    type: "html"
-    purpose: "student_questions"
-    url: "https://www.reddit.com/r/StudentiSrbija/search/?q=pmf"
-    enabled: true
+# --- Legacy single-page sources (retired — crawler covers all domains) ---
+sources: []
 
 # --- Transform ---
 transform:
