@@ -130,13 +130,14 @@ def _strip_domain_boilerplate(text: str) -> str:
         logger.debug("DMI boilerplate: stripping %d chars (prefix through Skip to content)", strip_end)
         text = text[strip_end:]
 
-    # DBE (wwwold.dbe.pmf.uns.ac.rs): English nav header ending with "SEARCH"
+    # DBE (wwwold.dbe.pmf.uns.ac.rs): English nav header ending with "prijava (odjava) SEARCH"
     dbe_marker = "Department of Biology and Ecology Faculty of Sciences about STUDYING"
     dbe_pos = text.find(dbe_marker)
     if dbe_pos != -1 and dbe_pos < 2000:
-        search_pos = text.find("SEARCH", dbe_pos)
+        end_marker = "prijava (odjava) SEARCH"
+        search_pos = text.find(end_marker, dbe_pos)
         if search_pos != -1:
-            strip_end = search_pos + len("SEARCH")
+            strip_end = search_pos + len(end_marker)
             logger.debug("DBE boilerplate: stripping %d chars (header through SEARCH)", strip_end - dbe_pos)
             text = text[:dbe_pos] + text[strip_end:]
 
