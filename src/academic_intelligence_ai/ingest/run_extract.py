@@ -20,7 +20,7 @@ def load_config() -> dict:
 
 def run():
     """Run extraction for all enabled sources."""
-    with PipelineTracker("extract") as tracker:
+    with PipelineTracker("extract", "Extract HTML from legacy single-page sources") as tracker:
         config = load_config()
         sources = config.get("sources", [])
 
