@@ -1,6 +1,8 @@
 """Filter raw HTML files — decide keep or discard before further processing."""
 
 import hashlib
+import re
+from copy import deepcopy
 from pathlib import Path
 
 from bs4 import BeautifulSoup
@@ -10,11 +12,13 @@ from academic_intelligence_ai.transform.filter.models import FilterResult
 
 logger = get_logger("transform.filter.html")
 
+_EMAIL_RE = re.compile(r"\S+@\S+\.\w+")
+_PHONE_RE = re.compile(r"[\+\d][\d\s\-\(\)]{6,}")
+
 
 def filter_html(
     file_path: Path,
     strip_tags: list[str],
-    min_text_length: int,
 ) -> FilterResult:
     """Run all filter checks on a single HTML file, return on first discard."""
     raw_html = file_path.read_text(encoding="utf-8", errors="replace")
@@ -22,12 +26,9 @@ def filter_html(
     if result := _check_empty(raw_html):
         return result
 
-    clean_text, title = _parse_and_clean(raw_html, strip_tags)
+    clean_text, title, soup = _parse_and_clean(raw_html, strip_tags)
 
-    if result := _check_error_page(clean_text, title):
-        return result
-
-    if result := _check_too_short(clean_text, min_text_length):
+    if result := _check_worthless_page(raw_html, clean_text, title, soup):
         return result
 
     return FilterResult(
@@ -55,8 +56,12 @@ def _check_empty(raw_html: str) -> FilterResult | None:
     return None
 
 
-def _parse_and_clean(raw_html: str, strip_tags: list[str]) -> tuple[str, str]:
-    """Strip unwanted tags and extract clean text. Returns (clean_text, title)."""
+def _parse_and_clean(raw_html: str, strip_tags: list[str]) -> tuple[str, str, BeautifulSoup]:
+    """Strip unwanted tags and extract clean text. Returns (clean_text, title, soup).
+
+    The returned soup is the content source AFTER strip_tags removal but BEFORE
+    get_text — callers can use it for structural checks (e.g. link-text ratio).
+    """
     soup = BeautifulSoup(raw_html, "html.parser")
 
     title_tag = soup.find("title")
@@ -87,7 +92,7 @@ def _parse_and_clean(raw_html: str, strip_tags: list[str]) -> tuple[str, str]:
     # Collapse whitespace into single spaces
     clean_text = " ".join(text.split())
 
-    return clean_text, title
+    return clean_text, title, source
 
 
 def _strip_domain_boilerplate(text: str) -> str:
@@ -158,8 +163,32 @@ def _strip_domain_boilerplate(text: str) -> str:
     return text
 
 
-def _check_error_page(clean_text: str, title: str) -> FilterResult | None:
-    """Discard if the page looks like a 404 or error page."""
+def _check_worthless_page(
+    raw_html: str,
+    clean_text: str,
+    title: str,
+    soup: BeautifulSoup,
+) -> FilterResult | None:
+    """Detect worthless pages: error, redirect, auth, too-short, nav-only.
+
+    Hard rejects are unconditional. Soft rejects (navigation-only) can be
+    overridden by a contact signal (email or phone on the page).
+    """
+    discard = FilterResult(
+        status="discard",
+        reason="",  # filled in per branch
+        text_hash="",
+        clean_text="",
+        text_length=len(clean_text),
+    )
+
+    # --- Hard reject: too short (<15 chars after strip) ---
+    if len(clean_text.strip()) < 15:
+        logger.debug("Worthless page: too_short (%d chars)", len(clean_text.strip()))
+        discard.reason = "too_short"
+        return discard
+
+    # --- Hard reject: error page ---
     error_patterns = [
         "404",
         "not found",
@@ -170,32 +199,57 @@ def _check_error_page(clean_text: str, title: str) -> FilterResult | None:
         "error page",
     ]
     # Only check short pages — a real content page mentioning "404" is fine
-    if len(clean_text) > 1000:
-        return None
+    if len(clean_text) <= 1000:
+        combined = f"{title} {clean_text}".lower()
+        for pattern in error_patterns:
+            if pattern in combined:
+                logger.debug("Worthless page: error_page (matched '%s')", pattern)
+                discard.reason = "error_page"
+                return discard
 
-    combined = f"{title} {clean_text}".lower()
-    for pattern in error_patterns:
-        if pattern in combined:
-            return FilterResult(
-                status="discard",
-                reason="error_page",
-                text_hash="",
-                clean_text="",
-                text_length=0,
+    # --- Hard reject: redirect page ---
+    if '<meta http-equiv="refresh"' in raw_html.lower():
+        logger.debug("Worthless page: redirect_page (meta refresh in raw HTML)")
+        discard.reason = "redirect_page"
+        return discard
+
+    redirect_phrases = ["bićete preusmereni", "you will be redirected"]
+    text_lower = clean_text.lower()
+    for phrase in redirect_phrases:
+        if phrase in text_lower:
+            logger.debug("Worthless page: redirect_page (matched '%s')", phrase)
+            discard.reason = "redirect_page"
+            return discard
+
+    # --- Hard reject: login / auth page ---
+    auth_phrases = ["prijavite se da biste", "unesite lozinku"]
+    if len(clean_text) <= 1000:
+        for phrase in auth_phrases:
+            if phrase in text_lower:
+                logger.debug("Worthless page: auth_page (matched '%s')", phrase)
+                discard.reason = "auth_page"
+                return discard
+
+    # --- Soft reject: navigation-only page ---
+    # Extract text NOT inside <a> tags by working on a deep copy of the soup
+    soup_copy = deepcopy(soup)
+    for a_tag in soup_copy.find_all("a"):
+        a_tag.decompose()
+    text_without_links = soup_copy.get_text(separator=" ")
+    non_link_text = " ".join(text_without_links.split())
+
+    if len(non_link_text) < 30:
+        has_contact = bool(_EMAIL_RE.search(clean_text) or _PHONE_RE.search(clean_text))
+        if has_contact:
+            logger.debug(
+                "Navigation-only page has contact signal — keeping (%d non-link chars)",
+                len(non_link_text),
             )
-    return None
+            return None
+        logger.debug("Worthless page: navigation_only (%d non-link chars)", len(non_link_text))
+        discard.reason = "navigation_only"
+        return discard
 
-
-def _check_too_short(clean_text: str, min_text_length: int) -> FilterResult | None:
-    """Discard if the extracted text is below the minimum character threshold."""
-    if len(clean_text) < min_text_length:
-        return FilterResult(
-            status="discard",
-            reason="too_short",
-            text_hash="",
-            clean_text="",
-            text_length=len(clean_text),
-        )
     return None
 
 

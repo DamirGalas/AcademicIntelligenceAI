@@ -41,7 +41,7 @@ def run(limit: int = 0) -> tuple[list[KeptFile], dict[str, dict[str, int]]]:
     kept: list[KeptFile] = []
 
     # --- Run filters (comment out a line to skip a file type) ---
-    _run_html_filter(raw_dir, strip_tags, min_text_length, seen_hashes, stats, limit, kept)
+    _run_html_filter(raw_dir, strip_tags, seen_hashes, stats, limit, kept)
     # PDF crawling disabled (html-only crawl) — PDF filter skipped
     # _run_pdf_filter(raw_dir, min_text_length, pdf_max_pages, seen_hashes, stats, limit, kept)
     # _run_docs_filter(raw_dir, ..., seen_hashes, stats, limit, kept)
@@ -56,7 +56,6 @@ def run(limit: int = 0) -> tuple[list[KeptFile], dict[str, dict[str, int]]]:
 def _run_html_filter(
     raw_dir: Path,
     strip_tags: list[str],
-    min_text_length: int,
     seen_hashes: set[str],
     stats: dict,
     limit: int,
@@ -69,7 +68,7 @@ def _run_html_filter(
         _filter_files(
             file_dir=domain_dir / "html",
             glob_pattern="*.html",
-            filter_fn=lambda fp: filter_html(fp, strip_tags, min_text_length),
+            filter_fn=lambda fp: filter_html(fp, strip_tags),
             file_type="html",
             domain=domain_dir.name,
             stats_key=f"{domain_dir.name}/html",

@@ -364,9 +364,10 @@
     "id": 43,
     "query": "Koji je telefon dekanata Prirodno-matematičkog fakulteta za pitanja vezana za Departman za biologiju i ekologiju?",
     "query_eng": "What is the phone number of the PMF dean's office for questions related to the Department of Biology and Ecology?",
-    "expected_answer": "Telefon dekanata PMF-a je 021/455630, a studentska služba je dostupna na 021/454389, 021/455643 i 021/4852712. Fakultet se nalazi na adresi Trg Dositeja Obradovića 3, 21000 Novi Sad.",
+    "expected_answer": "Telefon dekanata PMF-a je +381-21-485-2700. Studentska služba DBE je dostupna na 021/454389, 021/455643 i 021/4852712. Fakultet se nalazi na adresi Trg Dositeja Obradovića 3, 21000 Novi Sad.",
     "answer_type": "factual",
-    "department": "dbe"
+    "department": "dbe",
+    "note": "Sajt PMF nema poseban kontakt dekanata 'za DBE pitanja' — postoji samo generalni telefon dekanata. Pitanje reformulisano u expected_answer da odražava stvarno stanje na sajtu."
   },
   {
     "id": 44,

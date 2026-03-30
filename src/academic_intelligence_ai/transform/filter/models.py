@@ -8,7 +8,7 @@ from pathlib import Path
 class FilterResult:
     """Result of filtering a single file."""
     status: str        # "keep" or "discard"
-    reason: str        # "ok", "empty_file", "error_page", "too_short"
+    reason: str        # "ok", "empty_file", "error_page", "too_short", "redirect_page", "auth_page", "navigation_only"
     text_hash: str     # SHA-256 of clean text (empty if discarded early)
     clean_text: str    # extracted text (empty if discarded early)
     text_length: int   # len(clean_text)
