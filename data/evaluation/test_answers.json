@@ -2,6 +2,7 @@
   {
     "id": 1,
     "query": "Koji je email profesora Borisa Šobota na DMI?",
+    "query_eng": "What is the email of professor Boris Šobot at DMI?",
     "expected_answer": "Email profesora Borisa Šobota je sobot@dmi.uns.ac.rs.",
     "answer_type": "factual",
     "department": "dmi"
@@ -9,6 +10,7 @@
   {
     "id": 2,
     "query": "Ko je rukovodilac studijskog programa Računarske nauke na osnovnim studijama DMI?",
+    "query_eng": "Who is the head of the Computer Science study program at the undergraduate level at DMI?",
     "expected_answer": "Rukovodilac studijskog programa Računarske nauke na osnovnim akademskim studijama je dr Miloš Racković.",
     "answer_type": "factual",
     "department": "dmi"
@@ -16,6 +18,7 @@
   {
     "id": 3,
     "query": "Koliko traju osnovne akademske studije matematike na DMI?",
+    "query_eng": "How long do the undergraduate academic studies of mathematics at DMI last?",
     "expected_answer": "Osnovne akademske studije matematike na DMI traju 3 godine i nose 180 ESPB.",
     "answer_type": "factual",
     "department": "dmi"
@@ -23,6 +26,7 @@
   {
     "id": 4,
     "query": "Koji je novi tekući račun PMF-a u Novom Sadu od januara 2026?",
+    "query_eng": "What is the new current account of PMF in Novi Sad from January 2026?",
     "expected_answer": "Novi tekući račun Prirodno-matematičkog fakulteta u Novom Sadu od 5. januara 2026. godine je 840-32804845-47.",
     "answer_type": "factual",
     "department": "dmi"
@@ -30,13 +34,20 @@
   {
     "id": 5,
     "query": "Ko je rukovodilac master studijskog programa Veštačka inteligencija na DMI?",
+    "query_eng": "Who is the head of the master's study program Artificial Intelligence at DMI?",
     "expected_answer": "Rukovodilac master studijskog programa Veštačka inteligencija je dr Aleksandra Klašnja-Milićević.",
     "answer_type": "factual",
-    "department": "dmi"
+    "department": "dmi",
+    "problem": {
+      "symptom": "Retrieval vraća chunk koji se završava rečju 'Veštačka inteligencija' ali ime rukovodioca se nalazi u sledećem chunk-u koji ne prolazi kroz top-k filter.",
+      "suspected_cause": "Chunk boundary problem — stranica studijskog programa je izchunkovana tako da naziv programa i ime rukovodioca padaju u različite chunk-ove. Chunk sa imenom dobija niži reranker skor jer ne sadrži kontekst pitanja.",
+      "proposed_fix": "Povećati overlap između chunk-ova ili koristiti parent-document retrieval (retrieval na malim chunk-ovima, LLM dobija širi kontekst)."
+    }
   },
   {
     "id": 6,
     "query": "Koji je telefon sekretara Departmana za matematiku i informatiku?",
+    "query_eng": "What is the phone number of the secretary of the Department of Mathematics and Informatics?",
     "expected_answer": "Telefon sekretara departmana Đurice Salamona je (485)-2850, a kancelarija se nalazi u prizemlju zgrade DMI&DF, soba 12.",
     "answer_type": "factual",
     "department": "dmi"
@@ -44,6 +55,7 @@
   {
     "id": 7,
     "query": "Koji master studijski programi postoje na Departmanu za matematiku i informatiku?",
+    "query_eng": "What master study programs exist at the Department of Mathematics and Informatics?",
     "expected_answer": "Na DMI postoje master programi: Matematika (2 god, 120 ESPB), Primenjena matematika (2 god, 120 ESPB), Master profesor matematike (1 god, 60 ESPB), Data Science – Nauka o podacima (2 god, 120 ESPB), Računarske nauke (2 god, 120 ESPB), Informacione tehnologije (1 god, 60 ESPB) i Veštačka inteligencija (2 god, 120 ESPB).",
     "answer_type": "factual",
     "department": "dmi"
@@ -51,6 +63,7 @@
   {
     "id": 8,
     "query": "Kako se prijaviti na probni prijemni ispit na PMF-u?",
+    "query_eng": "How to apply for the trial entrance exam at PMF?",
     "expected_answer": "Probni prijemni ispit organizuju Studentski parlament i Savez studenata PMF-a. Ispit je potpuno besplatan, a zainteresovani maturanti mogu se prijaviti putem onlajn formulara koji se objavljuje na sajtu departmana.",
     "answer_type": "procedural",
     "department": "dmi"
@@ -58,6 +71,7 @@
   {
     "id": 9,
     "query": "Šta se dešava ako student ne položi predmet i mora ponovo da ga upiše na DMI?",
+    "query_eng": "What happens if a student fails a course and has to re-enroll in it at DMI?",
     "expected_answer": "Student koji nije položio predmet mora ponovo da upiše taj predmet, ponovo sluša nastavu i ispunjava predispitne obaveze kao da ga sluša prvi put. U posebnim okolnostima (npr. pandemija), ispunjene predispitne obaveze mogu važiti i u narednoj školskoj godini.",
     "answer_type": "procedural",
     "department": "dmi"
@@ -65,6 +79,7 @@
   {
     "id": 10,
     "query": "Da li DMI ima doktorske studije iz informatike?",
+    "query_eng": "Does DMI have doctoral studies in informatics?",
     "expected_answer": "Da, DMI ima doktorske akademske studije informatike u trajanju od 3 godine (180 ESPB). Rukovodilac studijskog programa je dr Miloš Radovanović.",
     "answer_type": "boolean",
     "department": "dmi"
@@ -72,6 +87,7 @@
   {
     "id": 11,
     "query": "Na kojoj adresi se nalazi Departman za fiziku?",
+    "query_eng": "At what address is the Department of Physics located?",
     "expected_answer": "Departman za fiziku se nalazi na adresi Trg Dositeja Obradovića 4, 21000 Novi Sad.",
     "answer_type": "factual",
     "department": "df"
@@ -79,6 +95,7 @@
   {
     "id": 12,
     "query": "Koji je kontakt telefon Departmana za fiziku?",
+    "query_eng": "What is the contact phone number of the Department of Physics?",
     "expected_answer": "Kontakt telefon Departmana za fiziku je 021/485-2800, a email adresa je info@df.uns.ac.rs.",
     "answer_type": "factual",
     "department": "df"
@@ -86,6 +103,7 @@
   {
     "id": 13,
     "query": "Koje katedre postoje na Departmanu za fiziku?",
+    "query_eng": "What chairs exist at the Department of Physics?",
     "expected_answer": "Na Departmanu za fiziku postoje sledeće katedre: Katedra za eksperimentalnu fiziku kondenzovane materije, Katedra za fizičku elektroniku, Katedra za nuklearnu fiziku, Katedra za opštu fiziku i metodiku nastave fizike, Katedra za radijacionu i subatomsku fiziku i Katedra za teorijsku fiziku.",
     "answer_type": "factual",
     "department": "df"
@@ -93,6 +111,7 @@
   {
     "id": 14,
     "query": "Gde studenti fizike mogu obavljati stručnu praksu?",
+    "query_eng": "Where can physics students do their internship?",
     "expected_answer": "Studenti fizike mogu obavljati stručnu praksu u naučnim institutima: Institut BioSens u Novom Sadu, Institut za fiziku u Beogradu i Institut za nuklearne nauke Vinča. Studenti medicinskog usmerenja mogu praksu obavljati u Institutu za onkologiju Vojvodine u Sremskoj Kamenici i Univerzitetskom kliničkom centru Vojvodine u Novom Sadu.",
     "answer_type": "procedural",
     "department": "df"
@@ -100,6 +119,7 @@
   {
     "id": 15,
     "query": "Da li Departman za fiziku nudi strukovne studije optometrije?",
+    "query_eng": "Does the Department of Physics offer vocational studies in optometry?",
     "expected_answer": "Da, Departman za fiziku nudi osnovne strukovne studije Optometrija kao i master strukovne studije Optometrija.",
     "answer_type": "boolean",
     "department": "df"
@@ -107,6 +127,7 @@
   {
     "id": 16,
     "query": "Na kojoj adresi se nalazi Departman za biologiju i ekologiju?",
+    "query_eng": "At what address is the Department of Biology and Ecology located?",
     "expected_answer": "Departman za biologiju i ekologiju se nalazi na adresi Trg Dositeja Obradovića 3, 21000 Novi Sad, a kontakt telefoni studentske službe su 021/454389, 021/455643 i 021/4852712.",
     "answer_type": "factual",
     "department": "dbe"
@@ -114,6 +135,7 @@
   {
     "id": 17,
     "query": "Koje module nudi studijski program Diplomirani biolog na DBE?",
+    "query_eng": "What modules does the Graduated Biologist study program at DBE offer?",
     "expected_answer": "Studijski program Diplomirani biolog nudi tri modula: Opšta biologija, Molekularna biologija i Mikrobiologija.",
     "answer_type": "factual",
     "department": "dbe"
@@ -121,6 +143,7 @@
   {
     "id": 18,
     "query": "Koji predmeti se izučavaju na Katedri za mikrobiologiju na DBE?",
+    "query_eng": "What subjects are studied at the Chair of Microbiology at DBE?",
     "expected_answer": "Na Katedri za mikrobiologiju na osnovnim studijama izučavaju se: Biotransformacije, Biologija algi i gljiva, Ekologija mikroorganizama, Jestive i otrovne gljive, Lekoviti agensi algi i gljiva, Mikologija, Mikrobiološki praktikum, Opšta mikrobiologija, Osnove mikrobiologije, Sistematika algi i gljiva i Virusologija.",
     "answer_type": "factual",
     "department": "dbe"
@@ -128,6 +151,7 @@
   {
     "id": 19,
     "query": "Šta je potrebno za upis na studijski program Diplomirani biolog?",
+    "query_eng": "What is required for enrollment in the Graduated Biologist study program?",
     "expected_answer": "Za upis na studijski program Diplomirani biolog potrebno je završeno srednje obrazovanje u četvorogodišnjem trajanju i položen prijemni ispit.",
     "answer_type": "procedural",
     "department": "dbe"
@@ -135,6 +159,7 @@
   {
     "id": 20,
     "query": "Da li Departman za biologiju i ekologiju organizuje manifestaciju Noć biologije?",
+    "query_eng": "Does the Department of Biology and Ecology organize the Biology Night event?",
     "expected_answer": "Da, Departman za biologiju i ekologiju organizuje manifestaciju Noć biologije koja se održava u prostorijama Departmana. Manifestacija se održava redovno od 2012. godine.",
     "answer_type": "boolean",
     "department": "dbe"
@@ -142,6 +167,7 @@
   {
     "id": 21,
     "query": "Koji je email Departmana za hemiju, biohemiju i zaštitu životne sredine?",
+    "query_eng": "What is the email of the Department of Chemistry, Biochemistry and Environmental Protection?",
     "expected_answer": "Email Departmana za hemiju, biohemiju i zaštitu životne sredine je infohemija@dh.uns.ac.rs, a kontakt telefon je +381-21-485-2720.",
     "answer_type": "factual",
     "department": "dh"
@@ -149,6 +175,7 @@
   {
     "id": 22,
     "query": "Koji je telefon i email biblioteke Departmana za hemiju?",
+    "query_eng": "What is the phone number and email of the library of the Department of Chemistry?",
     "expected_answer": "Telefon biblioteke Departmana za hemiju je 021/485-2723, a email je biblioteka@dh.uns.ac.rs. Biblioteka radi svakim radnim danom od 07:30 do 14:30 časova.",
     "answer_type": "factual",
     "department": "dh"
@@ -156,13 +183,20 @@
   {
     "id": 23,
     "query": "Koliko knjiga ima biblioteka Departmana za hemiju?",
+    "query_eng": "How many books does the library of the Department of Chemistry have?",
     "expected_answer": "Biblioteka Departmana za hemiju raspolaže sa 19.861 primerkom monografskih publikacija i 406 naslova domaće i strane periodike. U čitaonici se nalazi 20 mesta opremljenih računarima.",
     "answer_type": "factual",
-    "department": "dh"
+    "department": "dh",
+    "problem": {
+      "symptom": "Retrieval vraća URL dh.uns.ac.rs/biblioteka-3/ ali LLM generiše 'Sistem ne poseduje tu informaciju'. Chunk sa konkretnim brojem '19.861 primeraka' ne dolazi do LLM-a.",
+      "suspected_cause": "max_chunks_per_url=2 dedup limit filtrira chunk-ove sa iste stranice. Stranica biblioteke ima više chunk-ova — chunk sa statisitikama (broj knjiga) nije u prvih 2 i biva odbačen.",
+      "proposed_fix": "Povećati max_chunks_per_url na 3 ili 4 za stranice koje se eksplicitno traže. Alternativno: parent-document retrieval."
+    }
   },
   {
     "id": 24,
     "query": "Ko može biti član biblioteke Departmana za hemiju?",
+    "query_eng": "Who can be a member of the library of the Department of Chemistry?",
     "expected_answer": "Članovi biblioteke mogu biti studenti hemije, biohemije i ekologije, poslediplomci, kao i zaposleno osoblje. Ostala zainteresovana lica mogu iznajmiti knjige uz neki dokument, u skladu sa Pravilnikom o radu biblioteke.",
     "answer_type": "procedural",
     "department": "dh"
@@ -170,6 +204,7 @@
   {
     "id": 25,
     "query": "Da li Departman za hemiju ima katedru za biohemiju?",
+    "query_eng": "Does the Department of Chemistry have a chair for biochemistry?",
     "expected_answer": "Da, Departman za hemiju, biohemiju i zaštitu životne sredine ima Katedru za biohemiju i hemiju prirodnih proizvoda. Katedra trenutno ima 29 članova, uključujući tri redovna profesora, pet vanrednih profesora, pet docenata i druge saradnike.",
     "answer_type": "boolean",
     "department": "dh"
@@ -177,6 +212,7 @@
   {
     "id": 26,
     "query": "Koji smerovi postoje na osnovnim akademskim studijama na Departmanu za geografiju, turizam i hotelijerstvo?",
+    "query_eng": "What programs exist in the undergraduate academic studies at the Department of Geography, Tourism and Hotel Management?",
     "expected_answer": "Na osnovnim akademskim studijama DGT-a postoje smerovi: Profesor geografije, Geoprostorni analitičar, Geoinformatika, Turizam, Hotelijerstvo, Gastronomija, Lovni turizam, i Nutricionizam i dijetetika u ugostiteljstvu.",
     "answer_type": "factual",
     "department": "dgt"
@@ -184,6 +220,7 @@
   {
     "id": 27,
     "query": "Ko čini marketinški tim Departmana za geografiju, turizam i hotelijerstvo?",
+    "query_eng": "Who makes up the marketing team of the Department of Geography, Tourism and Hotel Management?",
     "expected_answer": "Marketinški tim DGT-a čine: Dajana Bjelajac (rukovodilac), Milica Radaković (geografija i geoinformatika), Maja Mijatov Ladičorbić (turizam), Jelena Tepavčević (hotelijerstvo), Stefan Šmugović (gastronomija) i Igor Ponjiger (lovni turizam). Tim uključuje i preko 20 najaktivnijih studenata.",
     "answer_type": "factual",
     "department": "dgt"
@@ -191,6 +228,7 @@
   {
     "id": 28,
     "query": "Koji je email profesora Vladimira Markovića na DGT-u?",
+    "query_eng": "What is the email of professor Vladimir Marković at DGT?",
     "expected_answer": "Email profesora Vladimira Markovića je vladimir.markovic@dgt.uns.ac.rs, a telefon je 021/485-2829.",
     "answer_type": "factual",
     "department": "dgt"
@@ -198,6 +236,7 @@
   {
     "id": 29,
     "query": "Kako se studenti turizma i hotelijerstva mogu učlaniti u Institute of Hospitality?",
+    "query_eng": "How can tourism and hospitality students join the Institute of Hospitality?",
     "expected_answer": "Studenti hotelijerstva i gastronomije treba da se obrate profesorima dr Bojani Kalenjuk, dr Draganu Tešanoviću, dr Ivani Blešić, dr Milanu Bradiću ili dr Svetlani Vukosav kako bi dobili instrukcije za kreiranje ličnog broja za članstvo i prijavu u Institute of Hospitality.",
     "answer_type": "procedural",
     "department": "dgt"
@@ -205,6 +244,7 @@
   {
     "id": 30,
     "query": "Da li DGT ima master studije iz geografije?",
+    "query_eng": "Does DGT have master studies in geography?",
     "expected_answer": "Da, DGT nudi master akademske studije iz geografije, uključujući smer Profesor geografije.",
     "answer_type": "boolean",
     "department": "dgt"
@@ -212,20 +252,33 @@
   {
     "id": 31,
     "query": "Ko je dekan Prirodno-matematičkog fakulteta u Novom Sadu?",
+    "query_eng": "Who is the dean of the Faculty of Sciences in Novi Sad?",
     "expected_answer": "Dekan Prirodno-matematičkog fakulteta je dr Srđan Rončević. Njegova kancelarija je broj 9 na međuspratu, telefon +381-21-485-2700, email dekan@pmf.uns.ac.rs.",
     "answer_type": "factual",
-    "department": "pmf"
+    "department": "pmf",
+    "problem": {
+      "symptom": "Stranica koja opisuje Rončevića nosi naslov 'Prodekan za nauku' (stara uloga), iako je on sada dekan. Retrieval vraća tu stranicu ali sadržaj ne sadrži reč 'dekan' u kontekstu njegove trenutne uloge.",
+      "suspected_cause": "Zastareli podaci (stale data) — stranica pmf.uns.ac.rs/o-fakultetu/uprava/ ili lična stranica Rončevića nije ažurirana nakon što je imenovan za dekana. Crawler je uzeo staru verziju.",
+      "proposed_fix": "Re-crawl PMF upravljačkih stranica i ponovo indeksirati. Dugoročno: periodični re-crawl za stranice koje se često menjaju (uprava, kontakti)."
+    }
   },
   {
     "id": 32,
     "query": "Ko je prodekan za nastavu na PMF-u?",
+    "query_eng": "Who is the vice-dean for teaching at PMF?",
     "expected_answer": "Prodekan za nastavu na PMF-u je dr Ljubica Ivanović Bibić. Njena kancelarija je broj 10 na međuspratu, telefon +381-21-485-2717, email nastava@pmf.uns.ac.rs.",
     "answer_type": "factual",
-    "department": "pmf"
+    "department": "pmf",
+    "problem": {
+      "symptom": "RAG generiše 'Sistem ne poseduje tu informaciju' iako retrieval vraća prodekan-nastava/ URL. LLM radi 4 tool call-a ali i dalje ne daje odgovor.",
+      "suspected_cause": "Expected answer je možda zastareo — prodekan za nastavu se mogao promeniti od kada je benchmark pisan. Ako je stranica prodekan-nastava/ ažurirana sa novim imenom, a expected_answer i dalje sadrži staro ime, benchmark je netačan a ne sistem.",
+      "proposed_fix": "Proveriti aktuelni sadržaj pmf.uns.ac.rs/o-fakultetu/uprava/prodekan-nastava/ i ažurirati expected_answer ako se ime promenilo."
+    }
   },
   {
     "id": 33,
     "query": "Ko je prodekan za nauku na PMF-u i koji mu je telefon?",
+    "query_eng": "Who is the vice-dean for science at PMF and what is their phone number?",
     "expected_answer": "Prodekan za nauku, međunarodnu saradnju i razvoj na PMF-u je dr Dušan Mrđa. Njegova kancelarija je broj 7 na međuspratu, telefon +381-21-485-2703, email nauka@pmf.uns.ac.rs.",
     "answer_type": "factual",
     "department": "pmf"
@@ -233,6 +286,7 @@
   {
     "id": 34,
     "query": "Kako se prijaviti na Erasmus+ studentsku mobilnost na PMF-u?",
+    "query_eng": "How to apply for Erasmus+ student mobility at PMF?",
     "expected_answer": "Za informacije o Erasmus+ akademskoj mobilnosti studenti treba da se obrate prodekanu za nauku ili da prate konkurse koji se objavljuju na sajtu fakulteta i departmana. Konkursna dokumentacija i rokovi prijave objavljuju se na sajtu PMF-a.",
     "answer_type": "procedural",
     "department": "pmf"
@@ -240,13 +294,20 @@
   {
     "id": 35,
     "query": "Da li PMF ima doktorske studije iz hemije?",
+    "query_eng": "Does PMF have doctoral studies in chemistry?",
     "expected_answer": "Da, PMF nudi doktorske akademske studije iz hemije u trajanju od 3 godine (180 ESPB). Program osposobljava studente za primenu savremenih metodologija i razvoj novih metoda hemijske analize i sinteze.",
     "answer_type": "boolean",
-    "department": "pmf"
+    "department": "pmf",
+    "problem": {
+      "symptom": "Retrieval vraća biografske stranice profesora hemije (koji imaju doktorat iz hemije) umesto stranice studijskog programa doktorskih studija hemije.",
+      "suspected_cause": "Pure embedding search ne razlikuje 'doktorske studije hemije' (program) od 'doktorat iz hemije' (biografska informacija). Biografske stranice su numerički dominantne i semantički bliske upitu.",
+      "proposed_fix": "BM25 hibridna pretraga — keyword matching bi favorizovao stranicu sa naslovom 'Doktorske studije hemije' nad biografskim stranicama koje samo pominju hemiju."
+    }
   },
   {
     "id": 36,
     "query": "Koliki je iznos studentske stipendije na Departmanu za matematiku i informatiku?",
+    "query_eng": "What is the amount of the student scholarship at the Department of Mathematics and Informatics?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "dmi"
@@ -254,6 +315,7 @@
   {
     "id": 37,
     "query": "Koja je cena smeštaja u studentskom domu za studente fizike?",
+    "query_eng": "What is the price of accommodation in the student dormitory for physics students?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "df"
@@ -261,6 +323,7 @@
   {
     "id": 38,
     "query": "Kolika je prosečna plata diplomiranih hemičara u Srbiji?",
+    "query_eng": "What is the average salary of chemistry graduates in Serbia?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "dh"
@@ -268,6 +331,7 @@
   {
     "id": 39,
     "query": "Koji je minimalni prosek za budžetski upis na master studije turizma na DGT-u?",
+    "query_eng": "What is the minimum GPA for state-funded enrollment in master studies in tourism at DGT?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "dgt"
@@ -275,6 +339,7 @@
   {
     "id": 40,
     "query": "Kada će biti objavljen konkurs za upis na PMF za školsku 2027/2028. godinu?",
+    "query_eng": "When will the enrollment competition for PMF for the 2027/2028 school year be announced?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "pmf"
@@ -282,6 +347,7 @@
   {
     "id": 41,
     "query": "Koji je email Tijane Ivanović iz Računskog centra DMI?",
+    "query_eng": "What is the email of Tijana Ivanović from the Computing Center of DMI?",
     "expected_answer": "Email Tijane Ivanović je tijana.ivanovic@dmi.uns.ac.rs. Radi u Računskom centru, kancelarija novi deo / 3, zgrada DMI&DF, telefon (485)-2872.",
     "answer_type": "factual",
     "department": "dmi"
@@ -289,6 +355,7 @@
   {
     "id": 42,
     "query": "Ko je šef Laboratorije za ispitivanje radioaktivnosti na Departmanu za fiziku?",
+    "query_eng": "Who is the head of the Laboratory for Radioactivity Testing at the Department of Physics?",
     "expected_answer": "Šef akreditovane Laboratorije za ispitivanje radioaktivnosti uzoraka i doze jonizujućeg i nejonizujućeg zračenja na Departmanu za fiziku je dr Dušan Mrđa, koji tu funkciju obavlja od 2015. godine.",
     "answer_type": "factual",
     "department": "df"
@@ -296,6 +363,7 @@
   {
     "id": 43,
     "query": "Koji je telefon dekanata Prirodno-matematičkog fakulteta za pitanja vezana za Departman za biologiju i ekologiju?",
+    "query_eng": "What is the phone number of the PMF dean's office for questions related to the Department of Biology and Ecology?",
     "expected_answer": "Telefon dekanata PMF-a je 021/455630, a studentska služba je dostupna na 021/454389, 021/455643 i 021/4852712. Fakultet se nalazi na adresi Trg Dositeja Obradovića 3, 21000 Novi Sad.",
     "answer_type": "factual",
     "department": "dbe"
@@ -303,6 +371,7 @@
   {
     "id": 44,
     "query": "Koji je email Jelene Petrović iz sekretarijata Departmana za hemiju?",
+    "query_eng": "What is the email of Jelena Petrović from the secretariat of the Department of Chemistry?",
     "expected_answer": "Email Jelene Petrović je jelena.petrovic@dh.uns.ac.rs, telefon +381-21-485-2720. Radi kao viši stručnotehnički saradnik za ostale delatnosti u sekretarijatu, V sprat, broj 10.",
     "answer_type": "factual",
     "department": "dh"
@@ -310,6 +379,7 @@
   {
     "id": 45,
     "query": "Koja studentska udruženja deluju pri DGT-u?",
+    "query_eng": "What student associations operate at DGT?",
     "expected_answer": "Pri DGT-u deluju Društvo Mladih Istraživača \"Branislav Bukurov\", Evropska geografska asocijacija za studente geografije EGEA (entitet u Novom Sadu) i Udruženje studenata turizma i ugostiteljstva \"Pavle Tomić\".",
     "answer_type": "factual",
     "department": "dgt"
@@ -317,6 +387,7 @@
   {
     "id": 46,
     "query": "Ko je prodekan za doktorske studije i akreditaciju na PMF-u?",
+    "query_eng": "Who is the vice-dean for doctoral studies and accreditation at PMF?",
     "expected_answer": "Prodekan za doktorske studije, akreditaciju i obezbeđenje kvaliteta na PMF-u je dr Mihajla Đan. Njena kancelarija je broj 8 na međuspratu, telefon +381-21-485-2702, email akreditacija@pmf.uns.ac.rs.",
     "answer_type": "factual",
     "department": "pmf"
@@ -324,6 +395,7 @@
   {
     "id": 47,
     "query": "Ko je prodekan za organizaciju i finansije na PMF-u?",
+    "query_eng": "Who is the vice-dean for organization and finance at PMF?",
     "expected_answer": "Prodekan za organizaciju i finansije na PMF-u je dr Danijela Rajter-Ćirić. Njena kancelarija je broj 5 na međuspratu, telefon +381-21-485-2704, email finansije@pmf.uns.ac.rs.",
     "answer_type": "factual",
     "department": "pmf"
@@ -331,6 +403,7 @@
   {
     "id": 48,
     "query": "Kako se organizuje Water Workshop na Departmanu za hemiju?",
+    "query_eng": "How is the Water Workshop organized at the Department of Chemistry?",
     "expected_answer": "Water Workshop (Škola za zaštitu životne sredine) organizuju Katedra za hemijsku tehnologiju i zaštitu životne sredine i Fondacija \"Docent dr Milena Dalmacija\". Održava se svakog septembra od 1997. godine i okuplja stručnjake iz nauke i privrede koji se bave problematikom kvaliteta voda. Studenti osnovnih, master i doktorskih studija imaju mogućnost da predstave svoje radove.",
     "answer_type": "procedural",
     "department": "dh"
@@ -338,6 +411,7 @@
   {
     "id": 49,
     "query": "Da li PMF nudi nagradu za najboljeg mladog naučnika?",
+    "query_eng": "Does PMF offer an award for the best young scientist?",
     "expected_answer": "Da, PMF dodeljuje godišnju nagradu \"Najbolji mladi naučnik\" povodom obeležavanja dana Fakulteta, 22. maja, za izuzetne rezultate u oblasti nauke i istraživačkog rada kandidata u prethodnoj kalendarskoj godini.",
     "answer_type": "boolean",
     "department": "pmf"
@@ -345,6 +419,7 @@
   {
     "id": 50,
     "query": "Da li Departman za fiziku ima akreditovanu laboratoriju?",
+    "query_eng": "Does the Department of Physics have an accredited laboratory?",
     "expected_answer": "Da, Departman za fiziku ima akreditovanu Laboratoriju za ispitivanje radioaktivnosti uzoraka i doze jonizujućeg i nejonizujućeg zračenja, kao i Laboratoriju za etaloniranje gama-spektrometara i aktivnosti radioaktivnih izvora gama emitera.",
     "answer_type": "boolean",
     "department": "df"
@@ -352,6 +427,7 @@
   {
     "id": 51,
     "query": "Koliko košta menza na PMF-u i do kad radi?",
+    "query_eng": "How much does the cafeteria at PMF cost and until when does it operate?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "pmf"
@@ -359,6 +435,7 @@
   {
     "id": 52,
     "query": "Koji su uslovi za dobijanje stipendije Ministarstva prosvete za studente biologije?",
+    "query_eng": "What are the conditions for obtaining a Ministry of Education scholarship for biology students?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "dbe"
@@ -366,6 +443,7 @@
   {
     "id": 53,
     "query": "Da li Fakultet tehničkih nauka u Novom Sadu ima studijski program iz informatike?",
+    "query_eng": "Does the Faculty of Technical Sciences in Novi Sad have a study program in informatics?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "dmi"
@@ -373,6 +451,7 @@
   {
     "id": 54,
     "query": "Koji studenti su položili ispit iz Matematičke analize 1 u januarskom roku 2026?",
+    "query_eng": "Which students passed the Mathematical Analysis 1 exam in the January session of 2026?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "dmi"
@@ -380,6 +459,7 @@
   {
     "id": 55,
     "query": "Koliko tačno parking mesta ima PMF za studente?",
+    "query_eng": "How many parking spaces does PMF have for students?",
     "expected_answer": "Sistem ne poseduje tu informaciju.",
     "answer_type": "unanswerable",
     "department": "pmf"
@@ -387,6 +467,7 @@
   {
     "id": 56,
     "query": "kolko traje master iz IT na dmi?",
+    "query_eng": "how long does the IT master at dmi last?",
     "expected_answer": "Master studijski program Informacione tehnologije na DMI traje 1 godinu i nosi 60 ESPB.",
     "answer_type": "factual",
     "department": "dmi"
@@ -394,6 +475,7 @@
   {
     "id": 57,
     "query": "ima li df neke laboratorije?",
+    "query_eng": "does df have any laboratories?",
     "expected_answer": "Da, Departman za fiziku ima akreditovane laboratorije: Laboratoriju za ispitivanje radioaktivnosti uzoraka i doze jonizujućeg i nejonizujućeg zračenja i Laboratoriju za etaloniranje gama-spektrometara i aktivnosti radioaktivnih izvora gama emitera.",
     "answer_type": "boolean",
     "department": "df"
@@ -401,6 +483,7 @@
   {
     "id": 58,
     "query": "gde se nalazi dgt, koja im je adresa?",
+    "query_eng": "where is dgt located, what is their address?",
     "expected_answer": "Departman za geografiju, turizam i hotelijerstvo se nalazi na adresi Trg Dositeja Obradovića 3, 21000 Novi Sad. Kontakt telefon je 021/450 105, a email info@dgt.uns.ac.rs.",
     "answer_type": "factual",
     "department": "dgt"
@@ -408,6 +491,7 @@
   {
     "id": 59,
     "query": "Koje studijske programe nudi Departman za fiziku u poređenju sa Departmanom za matematiku i informatiku na master nivou?",
+    "query_eng": "What study programs does the Department of Physics offer compared to the Department of Mathematics and Informatics at the master level?",
     "expected_answer": "Departman za fiziku na master nivou nudi: Master akademske studije Fizika, Master akademske studije Nastava fizike i Master strukovne studije Optometrija. Departman za matematiku i informatiku nudi znatno više master programa: Matematika, Primenjena matematika, Master profesor matematike, Data Science, Računarske nauke, Informacione tehnologije i Veštačka inteligencija.",
     "answer_type": "comparative",
     "department": "df"
@@ -415,6 +499,7 @@
   {
     "id": 60,
     "query": "Gde studenti fizike mogu obavljati stručnu praksu i koje akreditovane laboratorije postoje na samom Departmanu za fiziku?",
+    "query_eng": "Where can physics students do their internship and what accredited laboratories exist at the Department of Physics itself?",
     "expected_answer": "Studenti fizike mogu obavljati stručnu praksu u naučnim institutima: Institut BioSens u Novom Sadu, Institut za fiziku u Beogradu i Institut za nuklearne nauke Vinča, a studenti medicinskog usmerenja u Institutu za onkologiju Vojvodine i Univerzitetskom kliničkom centru Vojvodine. Na samom Departmanu za fiziku postoje akreditovane laboratorije: Laboratorija za ispitivanje radioaktivnosti uzoraka i doze jonizujućeg i nejonizujućeg zračenja i Laboratorija za etaloniranje gama-spektrometara i aktivnosti radioaktivnih izvora gama emitera.",
     "answer_type": "multi_part",
     "department": "df"
@@ -422,13 +507,20 @@
   {
     "id": 61,
     "query": "Ko su prodekani za nastavu i nauku na PMF-u i koji su im kontakti?",
+    "query_eng": "Who are the vice-deans for teaching and science at PMF and what are their contacts?",
     "expected_answer": "Prodekan za nastavu je dr Ljubica Ivanović Bibić (kancelarija 10, međusprat, tel. +381-21-485-2717, email nastava@pmf.uns.ac.rs). Prodekan za nauku, međunarodnu saradnju i razvoj je dr Dušan Mrđa (kancelarija 7, međusprat, tel. +381-21-485-2703, email nauka@pmf.uns.ac.rs).",
     "answer_type": "multi_part",
-    "department": "pmf"
+    "department": "pmf",
+    "problem": {
+      "symptom": "Retrieval konzistentno vraća prodekan-nastava/ stranicu ali ne i prodekan-za-nauku/ stranicu. LLM iscrpi max_tool_calls bez kompletnog odgovora. Viđeno i u prethodnim run-ovima gde je generated bio prazan string.",
+      "suspected_cause": "Stranica prodekan-za-nauku/ je na FAISS ranku ~100 za ovaj upit — embedding sličnost nije dovoljno visoka da bi prošla kroz top-k. Oba prodekana nisu zastupljena u istoj meri u embedding prostoru.",
+      "proposed_fix": "BM25 hibridna pretraga — keyword matching bi direktno pronašao stranicu sa 'prodekan za nauku' u naslovu. Alternativno: povećati max_tool_calls i naučiti LLM da formuliše zasebne upite za svaki deo multi_part pitanja."
+    }
   },
   {
     "id": 62,
     "query": "Koje katedre postoje na Departmanu za fiziku i koliko knjiga ima biblioteka Departmana za hemiju?",
+    "query_eng": "What chairs exist at the Department of Physics and how many books does the library of the Department of Chemistry have?",
     "expected_answer": "Na Departmanu za fiziku postoje: Katedra za eksperimentalnu fiziku kondenzovane materije, Katedra za fizičku elektroniku, Katedra za nuklearnu fiziku, Katedra za opštu fiziku i metodiku nastave fizike, Katedra za radijacionu i subatomsku fiziku i Katedra za teorijsku fiziku. Biblioteka Departmana za hemiju raspolaže sa 19.861 primerkom monografskih publikacija i 406 naslova domaće i strane periodike.",
     "answer_type": "multi_part",
     "department": "df"
@@ -436,6 +528,7 @@
   {
     "id": 63,
     "query": "Koji od ova dva departmana ima doktorske studije — DMI ili Departman za fiziku?",
+    "query_eng": "Which of these two departments has doctoral studies — DMI or the Department of Physics?",
     "expected_answer": "Oba departmana imaju doktorske studije. DMI ima doktorske akademske studije informatike (3 godine, 180 ESPB, rukovodilac dr Miloš Radovanović). Departman za fiziku nudi doktorske akademske studije fizike.",
     "answer_type": "comparative",
     "department": "dmi"
@@ -443,6 +536,7 @@
   {
     "id": 64,
     "query": "Koje katedre postoje na Departmanu za fiziku i koje na Departmanu za hemiju?",
+    "query_eng": "What chairs exist at the Department of Physics and which at the Department of Chemistry?",
     "expected_answer": "Na Departmanu za fiziku postoje: Katedra za eksperimentalnu fiziku kondenzovane materije, Katedra za fizičku elektroniku, Katedra za nuklearnu fiziku, Katedra za opštu fiziku i metodiku nastave fizike, Katedra za radijacionu i subatomsku fiziku i Katedra za teorijsku fiziku. Na Departmanu za hemiju, biohemiju i zaštitu životne sredine postoji Katedra za biohemiju i hemiju prirodnih proizvoda (sa 29 članova).",
     "answer_type": "comparative",
     "department": "df"
@@ -450,6 +544,7 @@
   {
     "id": 65,
     "query": "Koje predmete predaje Petar Mali?",
+    "query_eng": "What subjects does Petar Mali teach?",
     "expected_answer": "Profesor Petar Mali predaje: Matematika (osnovne strukovne studije Optometrija), Metodologija istraživačkog rada (osnovne akademske studije Fizika, osnovne strukovne studije Optometrija), Osnovi matematičke fizike (osnovne akademske studije Fizika), Matematička fizika (osnovne akademske studije Fizika), Simetrije u fizici (osnovne akademske studije Fizika), Napredna kvantna mehanika i Nelinearne pojave u kondenzovanim sistemima (master studije), te Viši kurs nelinearnih pojava u kondenzovanim sistemima (doktorske studije).",
     "answer_type": "factual",
     "department": "df"

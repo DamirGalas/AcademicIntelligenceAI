@@ -6,6 +6,8 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
+
 from academic_intelligence_ai.load.url_classifier import classify
 from academic_intelligence_ai.load.label_documents import get_department, get_relevance
 from academic_intelligence_ai.monitoring.logger import get_logger
@@ -15,6 +17,28 @@ from academic_intelligence_ai.utils.text import transliterate
 logger = get_logger("transform.save_processed")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _load_base_urls() -> dict[str, str]:
+    """Load domain -> base_url mapping from config.yaml."""
+    config_path = PROJECT_ROOT / "config" / "config.yaml"
+    with open(config_path, encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+    return {d["name"]: d["base_url"] for d in config.get("crawl_domains", [])}
+
+
+def _reconstruct_url(domain: str, raw_filename: str, base_urls: dict[str, str]) -> str:
+    """Reconstruct a URL from the raw filename and domain base URL.
+
+    Crawler saves files as {slug}.html where slug = url_path.replace('/', '__').
+    Example: o-fakultetu__uprava.html -> https://www.pmf.uns.ac.rs/o-fakultetu/uprava/
+    """
+    base_url = base_urls.get(domain, "")
+    if not base_url:
+        return ""
+    stem = Path(raw_filename).stem
+    path = stem.replace("__", "/")
+    return base_url.rstrip("/") + "/" + path + "/"
 
 
 def _extract_page_title(file_path: Path, file_type: str) -> str:
@@ -53,6 +77,7 @@ def save(kept_files: list[KeptFile], fresh: bool = False) -> int:
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     metadata_cache = _load_all_metadata()
+    base_urls = _load_base_urls()
     saved = 0
     skipped_irrelevant = 0
     skipped_existing = 0
@@ -70,6 +95,12 @@ def save(kept_files: list[KeptFile], fresh: bool = False) -> int:
             domain_meta = metadata_cache.get(entry.domain, {})
             file_meta = domain_meta.get(entry.file_path.name, {})
             url = file_meta.get("url", "")
+
+            # Fallback: reconstruct URL from filename if metadata.json didn't have it
+            if not url and entry.file_type == "html":
+                url = _reconstruct_url(entry.domain, entry.file_path.name, base_urls)
+                if url:
+                    logger.debug("Reconstructed URL for %s: %s", entry.file_path.name, url)
 
             category = classify(url)
             if get_relevance(category) == "none" and category != "blog-post-unclassified":

@@ -149,8 +149,11 @@ class RAGToolPipeline:
         chunks: list[dict] = []
         answer = ""
 
+        first_call = True
         for _ in range(max_tool_calls + 1):
-            result = self.llm.generate(messages, tools=[_SEARCH_TOOL])
+            tool_choice = "required" if first_call else "auto"
+            first_call = False
+            result = self.llm.generate(messages, tools=[_SEARCH_TOOL], tool_choice=tool_choice)
             total_prompt_tokens += result.get("prompt_tokens", 0)
             total_response_tokens += result.get("response_tokens", 0)
             total_latency_ms += result.get("latency_ms", 0)
@@ -189,6 +192,9 @@ class RAGToolPipeline:
                     "content": context,
                 },
             ]
+
+        if not answer:
+            answer = "Sistem ne poseduje tu informaciju."
 
         return {
             "answer": answer,

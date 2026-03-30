@@ -8,6 +8,7 @@ import yaml
 from sentence_transformers import SentenceTransformer
 
 from academic_intelligence_ai.monitoring.logger import get_logger
+from academic_intelligence_ai.query.reranker import Reranker
 from academic_intelligence_ai.utils.text import transliterate
 
 logger = get_logger("query.search")
@@ -46,6 +47,12 @@ class Searcher:
         self.allowed_categories: list[str] | None = query_cfg.get("allowed_categories", None)
         self.max_chunks_per_url = query_cfg.get("max_chunks_per_url", 2)
 
+        reranking_cfg = config.get("reranking", {})
+        reranking_enabled = reranking_cfg.get("enabled", False)
+        reranking_model = reranking_cfg.get("model", "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+        self.rerank_candidates = reranking_cfg.get("candidates", 20)
+        self.reranker = Reranker(reranking_model) if reranking_enabled else None
+
         logger.info("Loading embedding model: %s", model_name)
         self.model = SentenceTransformer(model_name)
 
@@ -60,7 +67,7 @@ class Searcher:
             self.index.ntotal, len(self.metadata),
         )
 
-    def search(self, query: str, top_k: int | None = None, category_filter: str | None = None) -> list[dict]:
+    def search(self, query: str, top_k: int | None = None, category_filter: str | None = None, rerank_query: str | None = None) -> list[dict]:
         """Search for the most relevant chunks given a query string.
 
         Returns a list of dicts with keys: score, source, purpose, chunk_index, text.
@@ -143,9 +150,16 @@ class Searcher:
                 chunks.append(r)
         results = [r for chunks in seen_urls.values() for r in chunks]
 
-        # Re-sort after boosting and deduplication, trim to requested top_k
+        # Re-sort after boosting and deduplication
         results.sort(key=lambda x: x["score"], reverse=True)
-        results = results[:top_k]
+
+        # Re-rank top candidates with cross-encoder if enabled
+        if self.reranker:
+            candidates = results[:self.rerank_candidates]
+            effective_rerank_query = rerank_query if rerank_query else query
+            results = self.reranker.rerank(effective_rerank_query, candidates, top_k)
+        else:
+            results = results[:top_k]
 
         logger.info(
             "Query: '%s' -> %d results (fetch_k=%d, top_k=%d, threshold=%.2f)",

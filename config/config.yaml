@@ -94,6 +94,12 @@ query:
   exclude_pdfs: true
   allowed_categories: null  # null = allow all HTML categories (PDFs excluded separately)
 
+# --- Re-ranking ---
+reranking:
+  enabled: true
+  model: "BAAI/bge-reranker-v2-m3"
+  candidates: 30  # how many FAISS candidates to pass to cross-encoder
+
 # --- LLM ---
 llm:
   model: "gpt-4o-mini"

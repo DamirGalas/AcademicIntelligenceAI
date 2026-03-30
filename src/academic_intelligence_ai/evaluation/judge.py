@@ -31,10 +31,12 @@ Oceni TAČNOST na skali 1-3:
 Posebna pravila po tipu pitanja:
 - "unanswerable": ocena 3 ako sistem kaže da ne zna, ocena 1 ako izmisli odgovor
 - "boolean": ocena 3 ako je da/ne odgovor tačan — detalji nisu obavezni za pun bod. Mora da bude neosporno da je odgovor tačan. Ukoliko postoji sumnja onda to treba da bude navedeno u odgovoru.
-- "factual": strogo proveravaj tačnost konkretnih podataka (emailovi, telefoni, imena)
+- "factual": strogo proveravaj tačnost konkretnih podataka (emailovi, telefoni, imena). Ako sistem kaže "ne poseduje informaciju" a pitanje JE answerable (expected answer postoji) — ocena 1.
 - "procedural": ocena 3 ako su navedeni ispravni koraci, čak i bez svih detalja. Detalji moraju da budu u generisanim odgovorima. Ne mogu da se izmisljaju.
-- "multi_part": ocena 3 samo ako su SVE komponente pitanja odgovorene tačno — svaki deo se ocenjuje jednako strogo kao "factual". Ocena 2 ako je odgovorena samo jedna od dve komponente.
+- "multi_part": ocena 3 samo ako su SVE komponente pitanja odgovorene tačno — svaki deo se ocenjuje jednako strogo kao "factual". Ocena 2 ako je odgovorena samo jedna od dve komponente. Ako sistem kaže "ne poseduje informaciju" — ocena 1.
 - "comparative": ocena 3 ako su oba entiteta tačno opisana i poređenje je ispravno. Ocena 2 ako je jedan entitet tačan a drugi nepotpun ili nedostaje.
+
+VAŽNO: Pravilo za "unanswerable" se primenjuje ISKLJUČIVO na pitanja tipa "unanswerable". Za sve ostale tipove, "Sistem ne poseduje tu informaciju" je netačan odgovor ako expected answer postoji — ocena 1.
 
 Odgovori ISKLJUČIVO u JSON formatu:
 {{"correctness": <1|2|3>, "reasoning": "<kratko objašnjenje>"}}
@@ -58,6 +60,7 @@ Oceni POUZDANOST na skali 1-3:
 
 Posebno pravilo:
 - "unanswerable": ako sistem kaže da ne poseduje informaciju — ocena 3, bez obzira na kontekst
+- Za sve ostale tipove pitanja (factual, boolean, procedural, multi_part, comparative): ako sistem kaže da ne poseduje informaciju a pitanje JE answerable — ocena 1 za faithfulness jer odgovor nije zasnovan na kontekstu koji postoji
 
 Odgovori ISKLJUČIVO u JSON formatu:
 {{"faithfulness": <1|2|3>, "reasoning": "<kratko objašnjenje>"}}"""

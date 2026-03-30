@@ -38,7 +38,7 @@ class LLMClient:
         self.client = OpenAI(api_key=api_key)
         logger.info("LLM client initialized: model=%s", self.model)
 
-    def generate(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
+    def generate(self, messages: list[dict], tools: list[dict] | None = None, tool_choice: str = "auto") -> dict:
         """Send messages to OpenAI and return response with metrics.
 
         Returns a dict with keys:
@@ -57,7 +57,7 @@ class LLMClient:
         }
         if tools:
             kwargs["tools"] = tools
-            kwargs["tool_choice"] = "auto"
+            kwargs["tool_choice"] = tool_choice
 
         start = time.perf_counter()
         response = self.client.chat.completions.create(**kwargs)
